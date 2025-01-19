@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "753150777389",
+    "project_id": "extreme-accessibility-math",
+    "storage_bucket": "extreme-accessibility-math.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:753150777389:android:c97a16f88f65ad5b8380a4",
+        "android_client_info": {
+          "package_name": "extremeaccessibility.math"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJosj4mA7NDKyP56PAGb8vDC19Wjd503c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
