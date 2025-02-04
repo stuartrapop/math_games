@@ -102,12 +102,13 @@ class Square extends PositionComponent
       isRandom: false,
       language: 'fr-FR',
     );
+    double descriptionLength = t.a["$description"]!.length.toDouble();
     sizedTextBox = SizedTextBox(
       t.a["$description"]!,
       size: Vector2(500, 499),
       timePerChar: 0.1,
       fontSize: 50,
-    )..position = Vector2(250, 510);
+    )..position = Vector2(300 - descriptionLength / 2 * 20, 700);
     gameRef.world.children.whereType<SizedTextBox>().forEach((child) {
       child.removeFromParent();
     });

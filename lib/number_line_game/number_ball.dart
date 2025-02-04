@@ -39,7 +39,6 @@ class NumberBall extends CircleComponent
     if (!updateShaderFlag) {
       return;
     }
-    print("updateing shader");
     final color = _getColorForNumber(number);
     double oppositeAngle = 0.0;
     // Calculate the opposite rotation for the gradient

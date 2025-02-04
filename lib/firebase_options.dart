@@ -67,7 +67,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '753150777389',
     projectId: 'extreme-accessibility-math',
     storageBucket: 'extreme-accessibility-math.firebasestorage.app',
-    iosBundleId: 'extremeaccesibility.math',
+    iosBundleId: 'extremeaccessibility.math',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -76,6 +76,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '753150777389',
     projectId: 'extreme-accessibility-math',
     storageBucket: 'extreme-accessibility-math.firebasestorage.app',
-    iosBundleId: 'extremeaccesibility.math.RunnerTests',
+    iosBundleId: 'extremeaccessibility.math.RunnerTests',
   );
 }

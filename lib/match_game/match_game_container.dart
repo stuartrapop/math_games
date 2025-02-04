@@ -1,4 +1,4 @@
-import 'package:first_math/bloc/match_stats_bloc.dart';
+import 'package:first_math/match_game/bloc/match_stats_bloc.dart';
 import 'package:first_math/match_game/match_game.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';

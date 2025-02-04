@@ -65,12 +65,6 @@ class NumberLineComponent extends PositionComponent
   }
 
   @override
-  void onMount() {
-    super.onMount();
-    print("onMount called for NumberLineComponent");
-  }
-
-  @override
   void onDragUpdate(fl_events.DragUpdateEvent event) {
     _rotateCannonTo(
         Vector2(event.localEndPosition.x, event.localEndPosition.y));

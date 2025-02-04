@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:first_math/bloc/match_stats_bloc.dart';
+import 'package:first_math/match_game/bloc/match_stats_bloc.dart';
 import 'package:first_math/utils/constants.dart';
 import 'package:first_math/utils/geometry_helpers.dart';
 import 'package:flame/collisions.dart';

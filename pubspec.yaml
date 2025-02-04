@@ -87,6 +87,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/memoryMatch/
+    - assets/images/fireGif/
     - assets/audio/
     # - assets/audio/action-loop-e-90-bpm-brvhrtz-233462.mp3
     # - assets/audio/laser-gun-81720.mp3

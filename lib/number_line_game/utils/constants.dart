@@ -13,8 +13,3 @@ List<Color> ballColors = [
   const Color.fromARGB(255, 255, 7, 164),
   const Color.fromARGB(255, 7, 255, 36),
 ];
-
-class CollisionGroups {
-  static const int numberBall = 1;
-  static const int spiralCircle = 2;
-}

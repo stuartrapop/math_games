@@ -1,19 +1,19 @@
-import 'package:first_math/match_game/bloc/match_stats_bloc.dart';
-import 'package:first_math/match_game/match_game.dart';
+import 'package:first_math/cerise_game/bloc/cerise_bloc.dart';
+import 'package:first_math/cerise_game/cerise_game.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-class GameOver extends StatelessWidget {
+class Menu extends StatelessWidget {
   final RouterComponent router;
-  final MatchGame game;
-  final MatchStatsBloc matchStatsBloc;
+  final CeriseGame game;
+  final CeriseBloc ceriseBloc;
   final Function returnHome;
 
-  const GameOver({
+  const Menu({
     super.key,
     required this.router,
     required this.game,
-    required this.matchStatsBloc,
+    required this.ceriseBloc,
     required this.returnHome,
   });
 
@@ -30,8 +30,8 @@ class GameOver extends StatelessWidget {
             width: 350,
             height: double.infinity,
             padding: const EdgeInsets.all(20), // Add padding for inner content
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(
+            decoration: const BoxDecoration(
+              color: Color.fromRGBO(
                   195, 54, 54, 0.8), // Semi-transparent red overlay
             ), // Semi-transparent black overlay
             child: Column(
@@ -39,7 +39,7 @@ class GameOver extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Félication, tu as gagné !',
+                  'Jeux des cerises',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -50,18 +50,18 @@ class GameOver extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () async {
                     // Hide the overlay
-                    matchStatsBloc.add(GameReset());
+                    ceriseBloc.add(const GameReset());
                     await Future.delayed(const Duration(milliseconds: 100));
-                    game.overlays.remove('game-over');
+                    game.overlays.remove('menu');
 
                     // Navigate to Moving Containers
-                    router.pushNamed('match-game');
+                    router.pushNamed('cerise-game');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple, // Button color
                     foregroundColor: Colors.white, // Text color
                   ),
-                  child: const Text('Jouer Match game'),
+                  child: const Text('Jouer aux Cerises'),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(

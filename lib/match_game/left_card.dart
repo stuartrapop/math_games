@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:first_math/bloc/match_stats_bloc.dart';
 import 'package:first_math/components/sized_text_box.dart';
+import 'package:first_math/match_game/bloc/match_stats_bloc.dart';
 import 'package:first_math/match_game/feedback_message.dart';
 import 'package:first_math/match_game/firework_animation.dart';
 import 'package:first_math/match_game/right_card.dart';

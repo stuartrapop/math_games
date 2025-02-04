@@ -1,13 +1,13 @@
 PODS:
   - audio_session (0.0.1):
     - Flutter
-  - Firebase/CoreOnly (11.4.0):
-    - FirebaseCore (= 11.4.0)
-  - firebase_core (3.8.1):
-    - Firebase/CoreOnly (= 11.4.0)
+  - Firebase/CoreOnly (11.6.0):
+    - FirebaseCore (~> 11.6.0)
+  - firebase_core (3.10.0):
+    - Firebase/CoreOnly (= 11.6.0)
     - Flutter
-  - FirebaseCore (11.4.0):
-    - FirebaseCoreInternal (~> 11.0)
+  - FirebaseCore (11.6.0):
+    - FirebaseCoreInternal (~> 11.6.0)
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/Logger (~> 8.0)
   - FirebaseCoreInternal (11.6.0):
@@ -59,17 +59,17 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
 
 SPEC CHECKSUMS:
-  audio_session: 2624df5d96be4fb169b372058e5bdc9dec1308b2
-  Firebase: cf1b19f21410b029b6786a54e9764a0cacad3c99
-  firebase_core: 418aed674e9a0b8b6088aec16cde82a811f6261f
-  FirebaseCore: e0510f1523bc0eb21653cac00792e1e2bd6f1771
+  audio_session: 45bb7cf0f7697329676a5b9b0d06eeba535b6625
+  Firebase: 374a441a91ead896215703a674d58cdb3e9d772b
+  firebase_core: 2337982fb78ee4d8d91e608b0a3d4f44346a93c8
+  FirebaseCore: 48b0dd707581cf9c1a1220da68223fb0a562afaa
   FirebaseCoreInternal: d98ab91e2d80a56d7b246856a8885443b302c0c2
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_tts: 0f492aab6accf87059b72354fcb4ba934304771d
+  flutter_tts: b88dbc8655d3dc961bc4a796e4e16a4cc1795833
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
-  just_audio: baa7252489dbcf47a4c7cc9ca663e9661c99aafa
-  path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
+  just_audio: 6c031bb61297cf218b4462be616638e81c058e97
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
 
-PODFILE CHECKSUM: a57f30d18f102dd3ce366b1d62a55ecbef2158e5
+PODFILE CHECKSUM: c8207f17742e55226310d9ec47e947f127117886
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

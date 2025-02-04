@@ -13,8 +13,6 @@ class AudioPool {
 
   void play() async {
     final player = players[currentIndex];
-    // player.setClip(
-    //     start: Duration.zero, end: const Duration(milliseconds: 200));
     await player.stop();
     await player.seek(Duration.zero);
     player.play();

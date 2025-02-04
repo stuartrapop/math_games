@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:first_math/bloc/match_stats_bloc.dart';
+import 'package:first_math/match_game/bloc/match_stats_bloc.dart';
 import 'package:first_math/match_game/display_dice.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';

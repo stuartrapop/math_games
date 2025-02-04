@@ -1,4 +1,4 @@
-package extremeaccesibility.math
+package extremeaccessibility.math
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -23,10 +23,6 @@ class VolumeDisplay extends SpriteComponent
 
   @override
   void onTapUp(TapUpEvent event) async {
-    // Handle the tap event
-    print('VolumeDisplay tapped!');
-    // Example: Toggle volume or any other functionality
-    print("Volume before: ${gameRef.hasVolume}");
     if (gameRef.hasVolume) {
       await gameRef.bgmAudioPlayer.stop();
       gameRef.hasVolume = false;

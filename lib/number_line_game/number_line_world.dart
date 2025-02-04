@@ -61,8 +61,6 @@ class NumberLineWorld extends World with HasGameRef<NumberLineGame> {
 
     for (final child in target.children) {
       count++;
-      final indent = '  ' * level; // Indentation to visualize hierarchy
-      // debugPrint('${indent}Child $count: ${child.runtimeType}');
       logChildren(
           parent: child, level: level + 1); // Recursively log child components
     }

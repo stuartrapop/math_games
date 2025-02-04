@@ -60,18 +60,18 @@ class GameOver extends StatelessWidget {
                 child: const Text('Play Again'),
               ),
               const SizedBox(height: 10),
-              // ElevatedButton(
-              //   onPressed: () {
-              //     // Add more routes as necessary
-              //     print("number line game return home");
-              //     returnHome();
-              //   },
-              //   style: ElevatedButton.styleFrom(
-              //     backgroundColor: Colors.grey, // Button color
-              //     foregroundColor: Colors.white, // Text color
-              //   ),
-              //   child: const Text('Home'),
-              // ),
+              ElevatedButton(
+                onPressed: () {
+                  // Add more routes as necessary
+                  print("number line game return home");
+                  returnHome();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey, // Button color
+                  foregroundColor: Colors.white, // Text color
+                ),
+                child: const Text('Home'),
+              ),
             ],
           ),
         ),

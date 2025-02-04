@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:first_math/angle_measurement_game/angle_measurement_game.dart';
 import 'package:first_math/angle_measurement_game/angle_menu.dart';
 import 'package:first_math/angle_measurement_game/angle_slide_game.dart';
+import 'package:first_math/cerise_game/cerise_container.dart';
 import 'package:first_math/five_across/five_accross_game.dart';
 import 'package:first_math/geometry_game/geometry_game_container.dart';
 import 'package:first_math/match_game/match_game_container.dart';
@@ -150,6 +151,12 @@ class MyApp extends StatelessWidget {
           return NumberLineContainer(returnHome: () => returnHome(context));
         },
       ),
+      GoRoute(
+        path: '/cerise-game',
+        builder: (context, state) {
+          return CeriseContainer(returnHome: () => returnHome(context));
+        },
+      ),
     ],
   );
 }
@@ -187,58 +194,71 @@ class _MenuPageState extends State<MenuPage> {
     // entries for the dropdown menu
     final centerStarMenuController = StarMenuController();
     final otherEntries = <Widget>[
+      // MenuItem(
+      //     context: context,
+      //     route: '/geometry-game',
+      //     title: 'Géometrie',
+      //     color: Colors.red,
+      //     icon: Icons.hexagon_outlined),
+      // MenuItem(
+      //     context: context,
+      //     route: '/angle',
+      //     title: 'Angles',
+      //     color: Colors.red,
+      //     icon: Icons.text_rotation_angleup),
       MenuItem(
-          context: context,
-          route: '/geometry-game',
-          title: 'Géometrie',
-          color: Colors.red,
-          icon: Icons.hexagon_outlined),
-      MenuItem(
-          context: context,
-          route: '/angle',
-          title: 'Angles',
-          color: Colors.red,
-          icon: Icons.text_rotation_angleup),
-      MenuItem(
+          key: const Key('shape-match'),
           context: context,
           route: '/shape-match-game',
           title: 'Shape Match',
           color: Colors.blue,
           icon: Icons.more_horiz_sharp),
       MenuItem(
+          key: const Key('match-game'),
           context: context,
           route: '/match-game',
           title: 'Match',
           color: Colors.lightGreen,
           icon: Icons.compare_arrows),
       MenuItem(
+          key: const Key('five-accross'),
           context: context,
           route: '/five-accross-game',
           title: 'Five Accross',
           color: Colors.orange,
           icon: Icons.compare_arrows),
       MenuItem(
+          key: const Key('cuisenaire'),
           context: context,
           route: '/cuisenaire-game',
           title: 'Cuisenaire',
           color: Colors.yellow,
           icon: Icons.compare_arrows),
       MenuItem(
+          key: const Key('memory-games'),
           context: context,
           route: '/memory-games',
           title: 'Memory',
           color: Colors.pink,
           icon: Icons.compare_arrows),
+      // MenuItem(
+      //     context: context,
+      //     route: '/pulley-game',
+      //     title: 'Pulley',
+      //     color: const Color.fromARGB(255, 101, 30, 233),
+      //     icon: Icons.compare_arrows),
       MenuItem(
-          context: context,
-          route: '/pulley-game',
-          title: 'Pulley',
-          color: const Color.fromARGB(255, 101, 30, 233),
-          icon: Icons.compare_arrows),
-      MenuItem(
+          key: const Key('number-line'),
           context: context,
           route: '/number-line-game',
           title: 'Number Line',
+          color: const Color.fromARGB(255, 101, 30, 233),
+          icon: Icons.compare_arrows),
+      MenuItem(
+          key: const Key('cerise-game'),
+          context: context,
+          route: '/cerise-game',
+          title: 'Cerise Game',
           color: const Color.fromARGB(255, 101, 30, 233),
           icon: Icons.compare_arrows),
     ];

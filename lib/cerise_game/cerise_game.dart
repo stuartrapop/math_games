@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:first_math/match_game/bloc/match_stats_bloc.dart';
-import 'package:first_math/match_game/diceMatch.dart';
-import 'package:first_math/match_game/game_over.dart';
-import 'package:first_math/match_game/match_world.dart';
+import 'package:first_math/cerise_game/bloc/cerise_bloc.dart';
+import 'package:first_math/cerise_game/cerise_world.dart';
+import 'package:first_math/cerise_game/menu.dart';
 import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart' as fl_game;
@@ -13,7 +12,7 @@ import 'package:flutter/material.dart';
 //
 //
 // The game class
-class MatchGame extends fl_game.FlameGame
+class CeriseGame extends fl_game.FlameGame
     with
         DoubleTapDetector,
         TapDetector,
@@ -26,11 +25,11 @@ class MatchGame extends fl_game.FlameGame
 
   //
   // controls if the engine is paused or not
-  final MatchStatsBloc matchStatsBloc;
+  final CeriseBloc ceriseBloc;
   final Function returnHome;
 
-  MatchGame({
-    required this.matchStatsBloc,
+  CeriseGame({
+    required this.ceriseBloc,
     required this.returnHome,
   }) : super(
           camera: CameraComponent.withFixedResolution(
@@ -55,7 +54,9 @@ class MatchGame extends fl_game.FlameGame
   Future<void> onLoad() async {
     super.onLoad();
     // Set up the initial screen layout
-    world = MatchWorld();
+    world = CeriseWorld(
+      returnHome: returnHome,
+    );
     camera = CameraComponent.withFixedResolution(
       width: 1000,
       height: 800,
@@ -64,28 +65,28 @@ class MatchGame extends fl_game.FlameGame
 
     router = fl_game.RouterComponent(
       routes: {
-        'match-game': fl_game.Route(
-          () => DiceMatch(
-              world: world, matchStatsBloc: matchStatsBloc, router: router),
+        'cerise-game': fl_game.WorldRoute(
+          () => CeriseWorld(returnHome: returnHome),
         ),
-        'game-over': fl_game.OverlayRoute(
+        'menu': fl_game.OverlayRoute(
           (context, game) {
-            return GameOver(
+            return Menu(
               router: router,
-              matchStatsBloc: matchStatsBloc,
-              game: game as MatchGame,
+              ceriseBloc: ceriseBloc,
+              game: game as CeriseGame,
               returnHome: returnHome,
             );
           },
         ),
       },
-      initialRoute: 'game-over',
+      initialRoute: 'menu',
     );
 
     add(router);
+    add(FpsTextComponent());
 
     print(
-        "MatchGame added to MatchWorld. Children of MatchWorld: ${world.children.toList()}");
+        "CeriseGame added to CeriseWord. Children of CeriseWord: ${world.children.toList()}");
   }
 
   @override
