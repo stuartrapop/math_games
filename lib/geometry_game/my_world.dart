@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:first_math/geometry_game/geometryGame.dart';
 import 'package:first_math/match_game/bloc/match_stats_bloc.dart';
-import 'package:first_math/utils/bounderies.dart';
 import 'package:flame/components.dart' as fl_comp;
 import 'package:flame/game.dart' as fl_game;
 import 'package:flame_forge2d/flame_forge2d.dart';
@@ -19,11 +18,11 @@ class MyWorld extends Forge2DWorld
     maxTranslation = 20.0; // Adjust this to your requirement
 
     print("camera ${gameRef.camera.viewport.position}");
-    final boundaries = createBoundaries(
-      iconSide: 90,
-      borderWidth: borderWidth,
-    );
-    await addAll(boundaries);
+    //   final boundaries = createBoundaries(
+    //     iconSide: 90,
+    //     borderWidth: borderWidth,
+    //   );
+    //   await addAll(boundaries);
   }
 
   @override

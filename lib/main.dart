@@ -12,6 +12,7 @@ import 'package:first_math/multi-cuisenaire/cuisenaire_game.dart';
 import 'package:first_math/number_line_game/number_line_container.dart';
 import 'package:first_math/pulley_game/pulley_game_container.dart';
 import 'package:first_math/shape_match_game.dart/shape_match_game_container.dart';
+import 'package:first_math/suite/suite_container.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -157,6 +158,12 @@ class MyApp extends StatelessWidget {
           return CeriseContainer(returnHome: () => returnHome(context));
         },
       ),
+      GoRoute(
+        path: '/suite-game',
+        builder: (context, state) {
+          return SuiteContainer(returnHome: () => returnHome(context));
+        },
+      ),
     ],
   );
 }
@@ -259,6 +266,13 @@ class _MenuPageState extends State<MenuPage> {
           context: context,
           route: '/cerise-game',
           title: 'Cerise Game',
+          color: const Color.fromARGB(255, 101, 30, 233),
+          icon: Icons.compare_arrows),
+      MenuItem(
+          key: const Key('suite-game'),
+          context: context,
+          route: '/suite-game',
+          title: 'Suite Game',
           color: const Color.fromARGB(255, 101, 30, 233),
           icon: Icons.compare_arrows),
     ];

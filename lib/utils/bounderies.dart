@@ -4,21 +4,16 @@ import 'package:geobase/geobase.dart' as gb;
 
 List<Wall> createBoundaries({
   double? strokeWidth,
+  required double width,
+  required double height,
   required double borderWidth,
-  required double iconSide,
 }) {
-  // Create the boundaries of the game screen with border and 4 corner icons starting from the top left corner
   gb.PositionSeries outerFrame = gb.PositionSeries.from([
-    gb.Position.create(x: iconSide, y: borderWidth),
-    gb.Position.create(x: 600 - iconSide, y: borderWidth),
-    gb.Position.create(x: 600 - iconSide, y: iconSide),
-    gb.Position.create(x: 600 - borderWidth, y: iconSide),
-    gb.Position.create(x: 600 - borderWidth, y: 900 - iconSide),
-    gb.Position.create(x: 600 - iconSide, y: 900 - iconSide),
-    gb.Position.create(x: 600 - iconSide, y: 900 - borderWidth),
-    gb.Position.create(x: iconSide, y: 900 - borderWidth),
-    gb.Position.create(x: iconSide, y: 900 - iconSide),
-    gb.Position.create(x: borderWidth, y: 900 - iconSide),
+    gb.Position.create(x: borderWidth, y: borderWidth),
+    gb.Position.create(x: width - 2 * borderWidth, y: borderWidth),
+    gb.Position.create(x: width - 2 * borderWidth, y: height - 2 * borderWidth),
+    gb.Position.create(x: borderWidth, y: height - 2 * borderWidth),
+    // gb.Position.create(x: width + borderWidth, y: borderWidth),
   ]);
 
   return polygonToWalls(

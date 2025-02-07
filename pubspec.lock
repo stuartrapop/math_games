@@ -202,10 +202,10 @@ packages:
     dependency: "direct main"
     description:
       name: flame
-      sha256: c02390443e40a2a9034ac867d0789ab32f215eba4779bff4655a7143eb3d75d0
+      sha256: "75eb2b2814a0af2686e9f36649f72249f1921b565d11d5bf956d17f9d8cfa67f"
       url: "https://pub.dev"
     source: hosted
-    version: "1.22.0"
+    version: "1.24.0"
   flame_bloc:
     dependency: "direct main"
     description:
@@ -218,10 +218,10 @@ packages:
     dependency: "direct main"
     description:
       name: flame_forge2d
-      sha256: "0dc74f08b972b7db88ad7c4d9d7ffd291220214cd3ad3c0cf1261db385c19da9"
+      sha256: "7f5ba3f3c72df0941fd54dcb79f7808e22ddf67604fa3a95043a6ff8501020ed"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.2+3"
+    version: "0.18.2+5"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -897,4 +897,4 @@ packages:
     version: "3.1.3"
 sdks:
   dart: ">=3.6.1 <4.0.0"
-  flutter: ">=3.24.0"
+  flutter: ">=3.27.1"
