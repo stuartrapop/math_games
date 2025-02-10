@@ -1,8 +1,8 @@
 import 'package:first_math/suite/components/grid_component.dart';
 import 'package:first_math/suite/components/snappable_polygon.dart';
-import 'package:flame_forge2d/flame_forge2d.dart';
+import 'package:flame/components.dart';
 
-void printPolygonsOnGrid(GridComponent targetGrid, Forge2DWorld world) {
+void printPolygonsOnGrid(GridComponent targetGrid, World world) {
   final allPolygons = world.children.whereType<SnappablePolygon>().toList();
   final polygonsOnGrid =
       allPolygons.where((polygon) => polygon.grid == targetGrid).toList();
@@ -15,7 +15,7 @@ void printPolygonsOnGrid(GridComponent targetGrid, Forge2DWorld world) {
 }
 
 List<SnappablePolygon> getPolygonsOnGrid(
-    GridComponent targetGrid, Forge2DWorld world) {
+    GridComponent targetGrid, World world) {
   final allPolygons = world.children.whereType<SnappablePolygon>().toList();
   return allPolygons.where((polygon) => polygon.grid == targetGrid).toList();
 }

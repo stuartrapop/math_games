@@ -8,16 +8,15 @@ import 'package:first_math/suite/data/questions.dart';
 import 'package:first_math/suite/suite_game.dart';
 import 'package:first_math/suite/utils/constants.dart';
 import 'package:first_math/suite/utils/utils.dart';
-import 'package:first_math/utils/bounderies.dart';
+import 'package:first_math/utils/constants.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 
-class SuiteWorld extends Forge2DWorld with HasGameRef<SuiteGame> {
+class SuiteWorld extends World with HasGameRef<SuiteGame> {
   final Function returnHome;
   late final SuiteBloc suiteBloc;
-  SuiteWorld({required this.returnHome}) : super(gravity: Vector2.zero());
+  SuiteWorld({required this.returnHome}) : super();
   bool showReplay = false;
   late StreamSubscription suiteSubscription;
 
@@ -29,16 +28,11 @@ class SuiteWorld extends Forge2DWorld with HasGameRef<SuiteGame> {
 
   @override
   FutureOr<void> onLoad() async {
+    worldCenter = gameRef.size / 2;
+
     suiteBloc = gameRef.suiteBloc; // Get the Bloc from the game
     print("Using suiteBloc: ${suiteBloc.state}");
     double borderWidth = 30;
-
-    final boundaries = createBoundaries(
-      width: 1000,
-      height: 800,
-      borderWidth: borderWidth,
-    );
-    await addAll(boundaries);
 
     final frame = Frame(
       borderWidth: borderWidth,
@@ -94,18 +88,11 @@ class SuiteWorld extends Forge2DWorld with HasGameRef<SuiteGame> {
 
   @override
   void render(Canvas canvas) {
-    // canvas.drawRect(
-    //   Rect.fromLTWH(0, 0, 1000, 800),
-    //   fillBlue,
-    // );
-    // super.render(canvas);
-  }
-
-  // Call this periodically or in response to an event
-  @override
-  void update(double dt) {
-    super.update(dt);
-    // logChildren();
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, 1000, 800),
+      fillBlue,
+    );
+    super.render(canvas);
   }
 
   void gameReset() {
@@ -115,8 +102,8 @@ class SuiteWorld extends Forge2DWorld with HasGameRef<SuiteGame> {
 
     add(questionGrid);
 
-    addAll(questions[3]);
-    addAll(answers[3]);
+    addAll(questions[4]);
+    addAll(answers[4]);
   }
 
   // @override

@@ -55,6 +55,16 @@ SnappablePolygon lShape = SnappablePolygon(
   ],
 )..grid = answerGrid;
 
+SnappablePolygon polygonWithHole = SnappablePolygon(
+  vertices: [Vector2(0, 0), Vector2(20, 0), Vector2(20, 20), Vector2(0, 20)],
+  innerVertices: [
+    Vector2(5, 5),
+    Vector2(15, 5),
+    Vector2(15, 15),
+    Vector2(5, 15)
+  ],
+)..grid = answerGrid;
+
 class QuestionData {
   final List<SnappablePolygon> objects;
   final List<V> questionPositions;
@@ -152,8 +162,36 @@ final question4 = QuestionData(
   questionPositions: [V(1, 0), V(10, 1), V(4, 4), V(1, 4), V(6, 0)],
   answerPositions: [V(1, 0), V(2, 1), V(9, 0), V(4, 1), V(6, 0)],
 );
+final question5 = QuestionData(
+  objects: [
+    square.copyWith()..color = Colors.green,
+    lShape.copyWith()
+      ..rotation = 90
+      ..color = Colors.red,
+    square.copyWith()
+      ..rotation = 90
+      ..scaleHeight = 4
+      ..scaleWidth = 3
+      ..color = Colors.black,
+    lShape.copyWith()
+      ..rotation = 270
+      ..color = Colors.purple,
+    polygonWithHole.copyWith()
+      ..scaleHeight = 0.2
+      ..scaleWidth = 0.2
+      ..color = Colors.orange,
+  ],
+  questionPositions: [V(1, 0), V(10, 1), V(4, 4), V(1, 4), V(6, 0)],
+  answerPositions: [V(1, 0), V(2, 1), V(9, 0), V(4, 1), V(6, 0)],
+);
 
-List<QuestionData> questionData = [question1, question2, question3, question4];
+List<QuestionData> questionData = [
+  question1,
+  question2,
+  question3,
+  question4,
+  question5
+];
 List<List<SnappablePolygon>> questions = questionData
     .map((e) => List.generate(
           e.objects.length,

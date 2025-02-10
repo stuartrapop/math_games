@@ -1,6 +1,8 @@
 import 'dart:math';
 
-import 'package:forge2d/forge2d.dart';
+import 'package:dart_earcut/dart_earcut.dart';
+import 'package:first_math/suite/components/snappable_polygon.dart';
+import 'package:flame/components.dart';
 
 bool isConvexPolygon(List<Vector2> vertices) {
   if (vertices.length < 3) return false; // Not a valid polygon
@@ -127,4 +129,189 @@ bool isCollidingPolygonPolygon(List<Vector2> a, List<Vector2> b) {
       : '❌ NO COLLISION - Objects are touching or separated');
 
   return colliding;
+}
+
+bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
+  List<Vector2> thisPolygon = draggedPolygon.adjustedVertices
+      .map((v) => v + draggedPolygon.position)
+      .toList();
+  List<Vector2> otherPolygon =
+      other.adjustedVertices.map((v) => v + other.position).toList();
+
+  List<List<Vector2>> draggedConvexPolygons = [];
+  if (isConvexPolygon(thisPolygon)) {
+    draggedConvexPolygons = [thisPolygon];
+  } else {
+    List<int> indices = Earcut.triangulateFromPoints(
+        thisPolygon.map((v) => Point(v.x, v.y)).toList());
+
+    // ✅ Convert index triplets into a list of triangles
+    for (int i = 0; i < indices.length; i += 3) {
+      draggedConvexPolygons.add([
+        thisPolygon[indices[i]],
+        thisPolygon[indices[i + 1]],
+        thisPolygon[indices[i + 2]],
+      ]);
+    }
+  }
+
+  List<List<Vector2>> otherConvexPolygons = [];
+  if (isConvexPolygon(otherPolygon)) {
+    otherConvexPolygons = [otherPolygon];
+  } else {
+    List<int> indices = Earcut.triangulateFromPoints(
+        otherPolygon.map((v) => Point(v.x, v.y)).toList());
+
+    // ✅ Convert index triplets into a list of triangles
+    for (int i = 0; i < indices.length; i += 3) {
+      otherConvexPolygons.add([
+        otherPolygon[indices[i]],
+        otherPolygon[indices[i + 1]],
+        otherPolygon[indices[i + 2]],
+      ]);
+    }
+  }
+
+  for (var draggedConvex in draggedConvexPolygons) {
+    for (var otherConvex in otherConvexPolygons) {
+      if (isCollidingPolygonPolygon(draggedConvex, otherConvex)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool isCounterClockwise(List<Vector2> polygon) {
+  double sum = 0.0;
+  for (int i = 0; i < polygon.length; i++) {
+    Vector2 p1 = polygon[i];
+    Vector2 p2 = polygon[(i + 1) % polygon.length];
+    sum += (p2.x - p1.x) * (p2.y + p1.y);
+  }
+  return sum > 0;
+}
+
+List<List<Vector2>> triangulatePolygonWithHoles({
+  required List<Vector2> outerPolygon,
+  required List<List<Vector2>> holes,
+}) {
+  print("🔹 Original Outer Polygon: $outerPolygon");
+  print("🔹 Original Holes: $holes");
+
+  // Ensure correct winding order
+  outerPolygon = ensureCounterClockwise(outerPolygon);
+  holes = holes.map((hole) => ensureClockwise(hole)).toList();
+
+  print("🔄 Corrected Outer Polygon: $outerPolygon");
+  print("🔄 Corrected Holes: $holes");
+
+  List<double> flattenedVertices = [];
+  List<int> holeIndices = [];
+
+  // Add outer polygon vertices
+  flattenedVertices.addAll(outerPolygon.expand((v) => [v.x, v.y]));
+
+  // Add hole vertices
+  int currentIndex = outerPolygon.length;
+  for (var hole in holes) {
+    holeIndices.add(currentIndex);
+    flattenedVertices.addAll(hole.expand((v) => [v.x, v.y]));
+    currentIndex += hole.length;
+  }
+
+  print("📍 Flattened Vertices: $flattenedVertices");
+  print("🕳️ Hole Indices: $holeIndices");
+
+  // Triangulate
+  List<int> indices =
+      Earcut.triangulateRaw(flattenedVertices, holeIndices: holeIndices);
+
+  print("🔺 Raw Indices: $indices");
+
+  if (indices.isEmpty) {
+    print("❌ Triangulation failed - No indices generated");
+    return [];
+  }
+
+  // Combine vertices
+  List<Vector2> combinedVertices = [...outerPolygon, ...holes.expand((h) => h)];
+  List<List<Vector2>> triangles = [];
+
+  // Generate triangles
+  for (int i = 0; i < indices.length; i += 3) {
+    List<Vector2> triangle = [
+      combinedVertices[indices[i]],
+      combinedVertices[indices[i + 1]],
+      combinedVertices[indices[i + 2]]
+    ];
+
+    // Enhanced hole checking
+    Vector2 centroid = Vector2(
+        (triangle[0].x + triangle[1].x + triangle[2].x) / 3,
+        (triangle[0].y + triangle[1].y + triangle[2].y) / 3);
+
+    print("🔺 Checking Triangle: $triangle");
+    print("📍 Triangle Centroid: $centroid");
+
+    bool isInHole = holes.any((hole) => pointInPolygon(centroid, hole));
+    print("🕳️ Is Triangle in Hole: $isInHole");
+
+    if (!isInHole) {
+      triangles.add(triangle);
+      print("✅ Valid Triangle Added: $triangle");
+    }
+  }
+
+  print("🏁 Total Triangles: ${triangles.length}");
+  return triangles;
+}
+
+/// **Ensure the outer polygon is counter-clockwise**
+List<Vector2> ensureCounterClockwise(List<Vector2> polygon) {
+  double area = 0;
+  for (int i = 0; i < polygon.length; i++) {
+    Vector2 p1 = polygon[i];
+    Vector2 p2 = polygon[(i + 1) % polygon.length];
+    area += (p2.x - p1.x) * (p2.y + p1.y);
+  }
+  return area > 0 ? polygon.reversed.toList() : polygon;
+}
+
+/// **Ensure holes are clockwise**
+List<Vector2> ensureClockwise(List<Vector2> polygon) {
+  double area = 0;
+  for (int i = 0; i < polygon.length; i++) {
+    Vector2 p1 = polygon[i];
+    Vector2 p2 = polygon[(i + 1) % polygon.length];
+    area += (p2.x - p1.x) * (p2.y + p1.y);
+  }
+  return area < 0 ? polygon.reversed.toList() : polygon;
+}
+
+/// **Check if a triangle is inside any of the holes**
+bool isTriangleInsideAnyHole(
+    List<Vector2> triangle, List<List<Vector2>> holes) {
+  // Calculate triangle centroid
+  Vector2 centroid = Vector2(
+      (triangle[0].x + triangle[1].x + triangle[2].x) / 3,
+      (triangle[0].y + triangle[1].y + triangle[2].y) / 3);
+
+  // Check if centroid is inside any hole
+  return holes.any((hole) => pointInPolygon(centroid, hole));
+}
+
+/// **Ray-Casting Algorithm: Check if a point is inside a polygon**
+bool pointInPolygon(Vector2 point, List<Vector2> polygon) {
+  int intersections = 0;
+  for (int i = 0; i < polygon.length; i++) {
+    Vector2 a = polygon[i];
+    Vector2 b = polygon[(i + 1) % polygon.length];
+
+    if ((a.y > point.y) != (b.y > point.y) &&
+        point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x) {
+      intersections++;
+    }
+  }
+  return (intersections % 2) != 0;
 }

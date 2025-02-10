@@ -20,8 +20,8 @@ class Frame extends PositionComponent with HasGameRef<SuiteGame> {
   FutureOr<void> onLoad() {
     // Set the size of the frame to match the game screen size
     print('gameRef.size.x: ${gameRef.size.x}');
-    double width = gameRef.size.x - 2 * borderWidth;
-    double height = gameRef.size.y - 2 * borderWidth;
+    double width = 1000 - 2 * borderWidth;
+    double height = 800 - 2 * borderWidth;
     double distanceFromEdge = 50;
     size.setValues(width, height);
     add(

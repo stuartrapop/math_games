@@ -1,4 +1,4 @@
-import 'package:flame_forge2d/flame_forge2d.dart';
+import 'package:flame/components.dart';
 
 enum SpriteName {
   fire,

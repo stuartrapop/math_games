@@ -6,15 +6,13 @@ import 'package:first_math/suite/suite_world.dart';
 import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-// import 'package:flame/game.dart' as fl_game;
 import 'package:flame/input.dart';
-import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart' hide OverlayRoute, Route;
 
 //
 //
 // The game class
-class SuiteGame extends Forge2DGame
+class SuiteGame extends FlameGame
     with
         DoubleTapDetector,
         TapDetector,
@@ -50,7 +48,7 @@ class SuiteGame extends Forge2DGame
     super.onLoad();
     // Set up the initial screen layout
     suiteWorld = SuiteWorld(returnHome: returnHome);
-    world = suiteWorld; // ✅ This sets the world in Forge2DGame
+    world = suiteWorld;
 
     // ✅ Make sure it's visible
     // add(suiteWorld);
@@ -58,6 +56,7 @@ class SuiteGame extends Forge2DGame
     camera = CameraComponent.withFixedResolution(
       width: 1000,
       height: 800,
+      world: world,
       viewfinder: Viewfinder(),
     )
       ..moveTo(

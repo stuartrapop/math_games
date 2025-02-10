@@ -1,14 +1,16 @@
+import 'dart:async';
 import 'dart:math';
 
-import 'package:dart_earcut/dart_earcut.dart';
-import 'package:first_math/suite/check_collision_polygon.dart' hide Vector2;
+import 'package:first_math/suite/check_collision_polygon.dart';
 import 'package:first_math/suite/components/grid_component.dart';
+import 'package:first_math/suite/suite_game.dart';
+import 'package:flame/collisions.dart';
+import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 
-class SnappablePolygon extends BodyComponent
-    with DragCallbacks, ContactCallbacks, TapCallbacks {
+class SnappablePolygon extends PositionComponent
+    with DragCallbacks, TapCallbacks, GestureHitboxes, HasGameRef<SuiteGame> {
   late GridComponent grid;
   late Vector2 initialPosition = Vector2.zero();
   late Color color = Colors.white;
@@ -19,7 +21,9 @@ class SnappablePolygon extends BodyComponent
   late final double polygonWidth;
   late final double polygonHeight;
   late final List<Vector2> adjustedVertices;
+  late final List<Vector2> adjustedInnerVertices;
   Vector2? lastValidPosition;
+  late Vector2 topLeft;
 
   final List<Vector2> vertices;
   List<Vector2> innerVertices;
@@ -55,41 +59,91 @@ class SnappablePolygon extends BodyComponent
       ..initialPosition = initialPosition.clone();
   }
 
+  bool isCounterClockwise(Vector2 a, Vector2 b, Vector2 c) {
+    double crossProduct = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    return crossProduct > 0; // CCW if positive, CW if negative
+  }
+
   @override
-  Body createBody() {
+  Future<void> onLoad() {
+    debugMode = true; // Show bounding box
+
     final List<Vector2> rotatedVertices = rotateVertices(vertices, rotation);
-    final Vector2 topLeft = _getTopLeft(rotatedVertices);
+    final List<Vector2> rotatedInnverVertices =
+        rotateVertices(innerVertices, rotation);
+    topLeft = _getTopLeft(rotatedVertices);
     adjustedVertices = rotatedVertices.map((v) {
       Vector2 shifted = (v - topLeft);
       Vector2 scaled =
           Vector2(shifted.x * scaleWidth, shifted.y * scaleHeight) *
               grid.gridSize.toDouble();
-
+      return scaled;
+    }).toList();
+    adjustedInnerVertices = rotatedInnverVertices.map((v) {
+      Vector2 shifted = (v - topLeft);
+      Vector2 scaled =
+          Vector2(shifted.x * scaleWidth, shifted.y * scaleHeight) *
+              grid.gridSize.toDouble();
       return scaled;
     }).toList();
 
     polygonWidth = _getPolygonWidth(adjustedVertices);
     polygonHeight = _getPolygonHeight(adjustedVertices);
-
-    // ✅ Convert initial position from unit space to pixel space
     final Vector2 initialPixelPosition = getClosestGridPoint(
         initialPosition * grid.gridSize.toDouble() + grid.position);
+    position = initialPixelPosition;
+    size = Vector2(polygonWidth, polygonHeight);
+    print(rotatedInnverVertices);
 
-    final bodyDef = BodyDef(
-      userData: isDraggable ? this : null,
-      position: initialPixelPosition,
-      type: BodyType.static,
-      gravityScale: Vector2.zero(), // Disable gravity
-      fixedRotation: true,
-    );
+    // ✅ Create a PolygonHitbox from adjustedVertices
+    print("adjustedVertices: $adjustedVertices");
 
-    final shape = PolygonShape()..set(adjustedVertices);
-    final fixtureDef = FixtureDef(shape)
-      ..density = 1.0 // Set density to 0
-      ..restitution = 0.0 // No bounce
-      ..friction = 0.0;
+    // ✅ Create a **non-solid** hitbox for the hole to block drag inside it
+    if (adjustedInnerVertices.isNotEmpty) {
+      print("adjustedInnerVertices: $adjustedInnerVertices");
+      final triangles = triangulatePolygonWithHoles(
+          outerPolygon: adjustedVertices, holes: [adjustedInnerVertices]);
+      print("triangles: $triangles");
+      for (int i = 0; i < triangles.length; i++) {
+        final relativeTriangle = triangles[i].map((v) => v - topLeft).toList();
+        if (true) {
+          add(PolygonHitbox(relativeTriangle, isSolid: false)
+            ..anchor = Anchor.topLeft);
+        }
+      }
+    } else {
+      add(PolygonHitbox(adjustedVertices, isSolid: true));
+    }
 
-    return world.createBody(bodyDef)..createFixture(fixtureDef);
+    anchor = Anchor.topLeft;
+    return super.onLoad();
+  }
+
+  /// **Create multiple hitboxes that exclude the hole**
+
+  /// **Check if a triangle is fully inside the hole**
+  bool isTriangleInsideHole(List<Vector2> triangle, List<Vector2> hole) {
+    for (var vertex in triangle) {
+      if (!pointInPolygon(vertex, hole)) {
+        return false; // ✅ At least one vertex is outside → Not fully inside hole
+      }
+    }
+    return true; // ❌ All vertices are inside → Ignore this triangle
+  }
+
+  /// **Check if a point is inside a polygon (Ray-Casting Algorithm)**
+  bool pointInPolygon(Vector2 point, List<Vector2> polygon) {
+    int intersections = 0;
+    for (int i = 0; i < polygon.length; i++) {
+      Vector2 a = polygon[i];
+      Vector2 b = polygon[(i + 1) % polygon.length];
+
+      if ((a.y > point.y) != (b.y > point.y) &&
+          point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x) {
+        intersections++;
+      }
+    }
+    return (intersections % 2) != 0;
   }
 
   List<Vector2> rotateVertices(List<Vector2> vertices, double angleInDegrees) {
@@ -106,64 +160,29 @@ class SnappablePolygon extends BodyComponent
     }).toList();
   }
 
-  bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
-    List<Vector2> thisPolygon =
-        draggedPolygon.adjustedVertices.map((v) => v + body.position).toList();
-    List<Vector2> otherPolygon =
-        other.adjustedVertices.map((v) => v + other.body.position).toList();
-
-    List<List<Vector2>> draggedConvexPolygons = [];
-    if (isConvexPolygon(thisPolygon)) {
-      draggedConvexPolygons = [thisPolygon];
-    } else {
-      List<int> indices = Earcut.triangulateFromPoints(
-          thisPolygon.map((v) => Point(v.x, v.y)).toList());
-
-      // ✅ Convert index triplets into a list of triangles
-      for (int i = 0; i < indices.length; i += 3) {
-        draggedConvexPolygons.add([
-          thisPolygon[indices[i]],
-          thisPolygon[indices[i + 1]],
-          thisPolygon[indices[i + 2]],
-        ]);
-      }
-    }
-
-    List<List<Vector2>> otherConvexPolygons = [];
-    if (isConvexPolygon(otherPolygon)) {
-      otherConvexPolygons = [otherPolygon];
-    } else {
-      List<int> indices = Earcut.triangulateFromPoints(
-          otherPolygon.map((v) => Point(v.x, v.y)).toList());
-
-      // ✅ Convert index triplets into a list of triangles
-      for (int i = 0; i < indices.length; i += 3) {
-        otherConvexPolygons.add([
-          otherPolygon[indices[i]],
-          otherPolygon[indices[i + 1]],
-          otherPolygon[indices[i + 2]],
-        ]);
-      }
-    }
-
-    print("draggedConvexPolygons: ${draggedConvexPolygons.length}");
-    print("otherConvexPolygons: ${otherConvexPolygons.length}");
-
-    for (var draggedConvex in draggedConvexPolygons) {
-      for (var otherConvex in otherConvexPolygons) {
-        if (isCollidingPolygonPolygon(draggedConvex, otherConvex)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   @override
   void onDragStart(DragStartEvent event) {
+    final localPoint = event.localPosition;
+    print("🖱 Drag Start Event at $localPoint");
     if (!isDraggable) return;
-    lastValidPosition = body.position.clone();
+
+    lastValidPosition = position.clone();
     super.onDragStart(event);
+  }
+
+  double calculatePolygonArea(List<Vector2> vertices) {
+    if (vertices.length < 3) return 0; // Not a valid polygon
+
+    double area = 0.0;
+
+    for (int i = 0; i < vertices.length; i++) {
+      Vector2 current = vertices[i];
+      Vector2 next = vertices[(i + 1) % vertices.length];
+
+      area += (current.x * next.y) - (next.x * current.y);
+    }
+
+    return area.abs() / 2.0; // Always return positive area
   }
 
   @override
@@ -174,12 +193,13 @@ class SnappablePolygon extends BodyComponent
   @override
   void onDragUpdate(DragUpdateEvent event) {
     if (!isDraggable) return;
-    final Vector2 newPosition = body.position + event.delta;
-    final Vector2 clampedPosition = _clampToGrid(newPosition);
-    body.setTransform(clampedPosition, body.angle);
+    final Vector2 newPosition = position + event.delta;
+    position = _clampToGrid(newPosition);
+    // position = _clampToGrid(newPosition);
   }
 
   void printPolygonsOnGrid(GridComponent targetGrid) {
+    final world = gameRef.world;
     final allPolygons = world.children.whereType<SnappablePolygon>().toList();
     final polygonsOnGrid =
         allPolygons.where((polygon) => polygon.grid == targetGrid).toList();
@@ -194,9 +214,9 @@ class SnappablePolygon extends BodyComponent
   @override
   void onDragEnd(DragEndEvent event) {
     if (!isDraggable) return;
-
-    final Vector2 snappedPosition = getClosestGridPoint(body.position);
-    body.setTransform(snappedPosition, body.angle);
+    final world = gameRef.world;
+    final Vector2 snappedPosition = getClosestGridPoint(_clampToGrid(position));
+    position = snappedPosition;
 
     // Check for overlaps with other polygons
     bool hasOverlap = false;
@@ -213,7 +233,7 @@ class SnappablePolygon extends BodyComponent
     // printPolygonsOnGrid(grid);
     // If there's an overlap, revert to the last valid position
     if (hasOverlap && lastValidPosition != null) {
-      body.setTransform(lastValidPosition!, body.angle);
+      position = lastValidPosition!;
       print("Overlap detected! Reverting to previous position");
     }
 
@@ -268,23 +288,50 @@ class SnappablePolygon extends BodyComponent
 
   @override
   void render(Canvas canvas) {
-    final paint = Paint()..color = color;
+    final outerPaint = Paint()..color = color;
+    final path = Path();
 
-    final path = Path()
-      ..moveTo(adjustedVertices.first.x, adjustedVertices.first.y);
+    // Draw the outer polygon
+    path.moveTo(adjustedVertices.first.x, adjustedVertices.first.y);
     for (var vertex in adjustedVertices.skip(1)) {
       path.lineTo(vertex.x, vertex.y);
     }
     path.close();
 
-    canvas.drawPath(path, paint);
+    // If there are inner vertices, create a hole
+    if (adjustedInnerVertices.isNotEmpty) {
+      // Save the canvas layer to allow blending effects
+      canvas.saveLayer(null, Paint());
+
+      // Draw the outer shape
+      canvas.drawPath(path, outerPaint);
+
+      // Create a hole using an inverse clipping path
+      final holePath = Path()
+        ..moveTo(adjustedInnerVertices.first.x, adjustedInnerVertices.first.y);
+      for (var vertex in adjustedInnerVertices.skip(1)) {
+        holePath.lineTo(vertex.x, vertex.y);
+      }
+      holePath.close();
+
+      // Use BlendMode.clear to cut out the hole
+      final holePaint = Paint()..blendMode = BlendMode.clear;
+      canvas.drawPath(holePath, holePaint);
+
+      // Restore the canvas to apply the blend mode
+      canvas.restore();
+    } else {
+      // If no inner vertices, just draw the main shape normally
+      canvas.drawPath(path, outerPaint);
+    }
+    super.render(canvas);
   }
 
   String toPrint() {
     final r = (color.value >> 16) & 0xFF;
     final g = (color.value >> 8) & 0xFF;
     final b = color.value & 0xFF;
-    return "Polygon at grid position: (${((body.position.x - grid.position.x) / grid.gridSize).round()}, ${((body.position.y - grid.position.y) / grid.gridSize).round()})"
+    return "Polygon at grid position: (${((position.x - grid.position.x) / grid.gridSize).round()}, ${((position.y - grid.position.y) / grid.gridSize).round()})"
         "\n  - Color: RGB($r, $g, $b)"
         "\n  - Scale: (Width: $scaleWidth, Height: $scaleHeight)"
         "\n  - Rotation: $rotation degrees";

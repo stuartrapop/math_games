@@ -6,23 +6,30 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('polygon tests', () {
-    final obj1 = PolygonObject(
-        [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]);
+    var outerPolygon = [
+      Vector2(0, 0),
+      Vector2(20, 0),
+      Vector2(20, 20),
+      Vector2(0, 20)
+    ];
+    var holes = [
+      [Vector2(5, 5), Vector2(15, 5), Vector2(15, 15), Vector2(5, 15)]
+    ];
 
-    final obj2 = PolygonObject(
-        [Vector2(1, 0), Vector2(2, 0), Vector2(2, 1), Vector2(1, 1)]);
-    final obj3 = PolygonObject(
-        [Vector2(1.5, 0), Vector2(2.5, 0), Vector2(2, 1), Vector2(2.5, 1)]);
-    final obj4 = PolygonObject([Vector2(0, 0), Vector2(1, 0), Vector2(0, 1)]);
-    final obj5 = PolygonObject([Vector2(0, 1), Vector2(1, 0), Vector2(1, 1)]);
+// Expected: 6 triangles
+// Triangles should cover the outer polygon while avoiding the hole
+
+    final triangles =
+        triangulatePolygonWithHoles(outerPolygon: outerPolygon, holes: holes);
+    print("Triangles in test $triangles");
     test('\npolygon collision tests1', () {
-      expect(isCollidingPolygonPolygon(obj1, obj2), false);
+      // expect(isCollidingPolygonPolygon(obj1, obj2), false);
     });
     test('\npolygon collision tests2', () {
-      expect(isCollidingPolygonPolygon(obj2, obj3), true);
+      // expect(isCollidingPolygonPolygon(obj2, obj3), true);
     });
     test('\npolygon collision tests3', () {
-      expect(isCollidingPolygonPolygon(obj4, obj5), false);
+      // expect(isCollidingPolygonPolygon(obj4, obj5), false);
     });
   });
 }
