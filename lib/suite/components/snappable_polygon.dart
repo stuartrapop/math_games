@@ -1,39 +1,38 @@
 import 'dart:math';
-import 'dart:ui';
 
+import 'package:dart_earcut/dart_earcut.dart';
+import 'package:first_math/suite/check_collision_polygon.dart' hide Vector2;
 import 'package:first_math/suite/components/grid_component.dart';
-import 'package:first_math/suite/data/questions.dart';
 import 'package:flame/events.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
+import 'package:flutter/material.dart';
 
 class SnappablePolygon extends BodyComponent
-    with DragCallbacks, ContactCallbacks {
-  final GridComponent grid;
-  final List<Vector2> vertices;
-  late final Vector2 initialPosition;
-  final Color polyColor;
-  double scaleWidth; // ✅ Scale width of the polygon
-  double scaleHeight;
-  double rotation;
-  bool isDraggable;
-  Vector2? lastValidPosition;
+    with DragCallbacks, ContactCallbacks, TapCallbacks {
+  late GridComponent grid;
+  late Vector2 initialPosition = Vector2.zero();
+  late Color color = Colors.white;
+  double scaleWidth = 1.0;
+  double scaleHeight = 1.0;
+  double rotation = 0.0;
 
   late final double polygonWidth;
   late final double polygonHeight;
   late final List<Vector2> adjustedVertices;
+  Vector2? lastValidPosition;
 
+  final List<Vector2> vertices;
+  List<Vector2> innerVertices;
+  bool isDraggable;
   SnappablePolygon({
-    required this.grid,
     required this.vertices,
-    required this.polyColor,
-    this.scaleWidth = 1,
-    this.scaleHeight = 1,
-    this.rotation = 0,
+    this.innerVertices = const [],
     this.isDraggable = true,
   });
   SnappablePolygon copyWith({
     List<Vector2>? vertices,
-    Color? polyColor,
+    List<Vector2>? innerVertices,
+    Color? color,
     GridComponent? grid,
     double? scaleWidth,
     double? scaleHeight,
@@ -41,27 +40,23 @@ class SnappablePolygon extends BodyComponent
     double? rotation,
   }) {
     return SnappablePolygon(
-      grid: grid ?? this.grid,
       vertices: vertices != null
           ? vertices.map((v) => v.clone()).toList()
           : this.vertices.map((v) => v.clone()).toList(),
-      polyColor: polyColor ?? this.polyColor,
-      scaleWidth: scaleWidth ?? this.scaleWidth,
-      scaleHeight: scaleHeight ?? this.scaleHeight,
+      innerVertices:
+          innerVertices ?? this.innerVertices.map((v) => v.clone()).toList(),
       isDraggable: isDraggable ?? this.isDraggable,
-      rotation: rotation ?? this.rotation,
-    );
-  }
-
-  @override
-  Future<void> onLoad() async {
-    super.onLoad();
+    )
+      ..grid = grid ?? this.grid
+      ..color = color ?? this.color
+      ..scaleWidth = scaleWidth ?? this.scaleWidth
+      ..scaleHeight = scaleHeight ?? this.scaleHeight
+      ..rotation = rotation ?? this.rotation
+      ..initialPosition = initialPosition.clone();
   }
 
   @override
   Body createBody() {
-    assert(initialPosition != null,
-        "initialPosition must be set before adding to the world!");
     final List<Vector2> rotatedVertices = rotateVertices(vertices, rotation);
     final Vector2 topLeft = _getTopLeft(rotatedVertices);
     adjustedVertices = rotatedVertices.map((v) {
@@ -111,39 +106,57 @@ class SnappablePolygon extends BodyComponent
     }).toList();
   }
 
-  bool checkOverlap(SnappablePolygon other) {
-    // Get bounding box for this polygon
-    Vector2 thisMin = Vector2(
-        adjustedVertices.map((v) => v.x + body.position.x).reduce(min),
-        adjustedVertices.map((v) => v.y + body.position.y).reduce(min));
-    Vector2 thisMax = Vector2(
-        adjustedVertices.map((v) => v.x + body.position.x).reduce(max),
-        adjustedVertices.map((v) => v.y + body.position.y).reduce(max));
+  bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
+    List<Vector2> thisPolygon =
+        draggedPolygon.adjustedVertices.map((v) => v + body.position).toList();
+    List<Vector2> otherPolygon =
+        other.adjustedVertices.map((v) => v + other.body.position).toList();
 
-    // Get bounding box for other polygon
-    Vector2 otherMin = Vector2(
-        other.adjustedVertices
-            .map((v) => v.x + other.body.position.x)
-            .reduce(min),
-        other.adjustedVertices
-            .map((v) => v.y + other.body.position.y)
-            .reduce(min));
-    Vector2 otherMax = Vector2(
-        other.adjustedVertices
-            .map((v) => v.x + other.body.position.x)
-            .reduce(max),
-        other.adjustedVertices
-            .map((v) => v.y + other.body.position.y)
-            .reduce(max));
+    List<List<Vector2>> draggedConvexPolygons = [];
+    if (isConvexPolygon(thisPolygon)) {
+      draggedConvexPolygons = [thisPolygon];
+    } else {
+      List<int> indices = Earcut.triangulateFromPoints(
+          thisPolygon.map((v) => Point(v.x, v.y)).toList());
 
-    // Check for overlap with a small epsilon for grid alignment
-    const epsilon = 0.001;
-    bool noOverlap = thisMax.x <= otherMin.x + epsilon ||
-        thisMin.x >= otherMax.x - epsilon ||
-        thisMax.y <= otherMin.y + epsilon ||
-        thisMin.y >= otherMax.y - epsilon;
+      // ✅ Convert index triplets into a list of triangles
+      for (int i = 0; i < indices.length; i += 3) {
+        draggedConvexPolygons.add([
+          thisPolygon[indices[i]],
+          thisPolygon[indices[i + 1]],
+          thisPolygon[indices[i + 2]],
+        ]);
+      }
+    }
 
-    return !noOverlap;
+    List<List<Vector2>> otherConvexPolygons = [];
+    if (isConvexPolygon(otherPolygon)) {
+      otherConvexPolygons = [otherPolygon];
+    } else {
+      List<int> indices = Earcut.triangulateFromPoints(
+          otherPolygon.map((v) => Point(v.x, v.y)).toList());
+
+      // ✅ Convert index triplets into a list of triangles
+      for (int i = 0; i < indices.length; i += 3) {
+        otherConvexPolygons.add([
+          otherPolygon[indices[i]],
+          otherPolygon[indices[i + 1]],
+          otherPolygon[indices[i + 2]],
+        ]);
+      }
+    }
+
+    print("draggedConvexPolygons: ${draggedConvexPolygons.length}");
+    print("otherConvexPolygons: ${otherConvexPolygons.length}");
+
+    for (var draggedConvex in draggedConvexPolygons) {
+      for (var otherConvex in otherConvexPolygons) {
+        if (isCollidingPolygonPolygon(draggedConvex, otherConvex)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @override
@@ -151,6 +164,11 @@ class SnappablePolygon extends BodyComponent
     if (!isDraggable) return;
     lastValidPosition = body.position.clone();
     super.onDragStart(event);
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    print("on Tap Down");
   }
 
   @override
@@ -182,16 +200,17 @@ class SnappablePolygon extends BodyComponent
 
     // Check for overlaps with other polygons
     bool hasOverlap = false;
+
     for (var component in world.children) {
       if (component is SnappablePolygon && component != this) {
-        if (checkOverlap(component)) {
+        if (checkOverlap(component, this)) {
           hasOverlap = true;
           break;
         }
       }
     }
     // 🔥 Print all SnappablePolygons
-    printPolygonsOnGrid(targetGrid);
+    // printPolygonsOnGrid(grid);
     // If there's an overlap, revert to the last valid position
     if (hasOverlap && lastValidPosition != null) {
       body.setTransform(lastValidPosition!, body.angle);
@@ -249,7 +268,7 @@ class SnappablePolygon extends BodyComponent
 
   @override
   void render(Canvas canvas) {
-    final paint = Paint()..color = polyColor;
+    final paint = Paint()..color = color;
 
     final path = Path()
       ..moveTo(adjustedVertices.first.x, adjustedVertices.first.y);
@@ -262,9 +281,9 @@ class SnappablePolygon extends BodyComponent
   }
 
   String toPrint() {
-    final r = (polyColor.value >> 16) & 0xFF;
-    final g = (polyColor.value >> 8) & 0xFF;
-    final b = polyColor.value & 0xFF;
+    final r = (color.value >> 16) & 0xFF;
+    final g = (color.value >> 8) & 0xFF;
+    final b = color.value & 0xFF;
     return "Polygon at grid position: (${((body.position.x - grid.position.x) / grid.gridSize).round()}, ${((body.position.y - grid.position.y) / grid.gridSize).round()})"
         "\n  - Color: RGB($r, $g, $b)"
         "\n  - Scale: (Width: $scaleWidth, Height: $scaleHeight)"

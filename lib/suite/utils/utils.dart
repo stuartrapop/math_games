@@ -68,7 +68,7 @@ bool comparePolygons(
     SnappablePolygon q = questions[i];
     SnappablePolygon a = answers[i];
 
-    if (q.polyColor != a.polyColor ||
+    if (q.color != a.color ||
         q.scaleWidth != a.scaleWidth ||
         q.scaleHeight != a.scaleHeight ||
         q.rotation != a.rotation ||

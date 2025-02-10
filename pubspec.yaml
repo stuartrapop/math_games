@@ -54,6 +54,7 @@ dependencies:
   responsive_framework: ^1.5.1
   just_audio: ^0.9.42
   just_audio_web: ^0.4.13
+  dart_earcut: ^1.2.0
   # audioplayers: ^6.1.0
   # http: ^1.2.2
 

@@ -45,15 +45,15 @@ class SuiteWorld extends Forge2DWorld with HasGameRef<SuiteGame> {
       returnHome: returnHome,
       validate: () {
         List<SnappablePolygon> questionPolygons =
-            getPolygonsOnGrid(targetGrid, this);
+            getPolygonsOnGrid(questionGrid, this);
         List<SnappablePolygon> solutionPolygons =
-            getPolygonsOnGrid(solutionGrid, this);
+            getPolygonsOnGrid(answerGrid, this);
 
         bool isSolution = comparePolygons(
           questions: questionPolygons,
-          questionGrid: targetGrid,
+          questionGrid: questionGrid,
           answers: solutionPolygons,
-          answerGrid: solutionGrid,
+          answerGrid: answerGrid,
         );
         print("isSolution: $isSolution");
         if (isSolution) {
@@ -111,12 +111,12 @@ class SuiteWorld extends Forge2DWorld with HasGameRef<SuiteGame> {
   void gameReset() {
     suiteBloc.add(GameReset());
 
-    add(solutionGrid);
+    add(answerGrid);
 
-    add(targetGrid);
+    add(questionGrid);
 
-    addAll(questions[2]);
-    addAll(answers[2]);
+    addAll(questions[3]);
+    addAll(answers[3]);
   }
 
   // @override

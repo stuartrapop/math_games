@@ -3,123 +3,169 @@ import 'package:first_math/suite/components/snappable_polygon.dart';
 import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 
-GridComponent solutionGrid = GridComponent(
+typedef V = Vector2;
+
+GridComponent answerGrid = GridComponent(
   gridSize: 35,
   rows: 8,
   cols: 14,
   lineWidth: 2,
-)..position = Vector2(250, 100);
+)..position = V(250, 100);
 
-GridComponent targetGrid = GridComponent(
+GridComponent questionGrid = GridComponent(
   gridSize: 35,
   rows: 8,
   cols: 14,
   lineWidth: 2,
-)..position = Vector2(250, 400);
+)..position = V(250, 400);
 
-final squareVertices = [
-  Vector2(0, 0), // Top-left (snap reference)
-  Vector2(1, 0),
-  Vector2(1, 1),
-  Vector2(0, 1),
-];
-final triangleVertices = [
-  Vector2(0, 1), // Top-left (snap reference)
-  Vector2(1, 0),
-  Vector2(1, 1),
-];
-
-final parrallelagramVertices = [
-  Vector2(1, 0), // Top-left (snap reference)
-  Vector2(4, 0),
-  Vector2(3, 2),
-  Vector2(0, 2),
-];
-
-SnappablePolygon redRectangle = SnappablePolygon(
-  grid: targetGrid,
-  vertices: squareVertices,
-  polyColor: Colors.red,
-  scaleWidth: 2,
-);
-SnappablePolygon square2x2 = SnappablePolygon(
-  grid: targetGrid,
-  vertices: squareVertices,
-  polyColor: Colors.green,
-  scaleWidth: 2,
-  scaleHeight: 2,
-);
+SnappablePolygon square = SnappablePolygon(
+  vertices: [
+    V(0, 0), // Top-left (snap reference)
+    V(1, 0),
+    V(1, 1),
+    V(0, 1),
+  ],
+)..grid = answerGrid;
 
 SnappablePolygon triangle = SnappablePolygon(
-    // Initial top-left position
-    grid: targetGrid,
-    vertices: triangleVertices,
-    polyColor: Colors.blue,
-    scaleHeight: 2,
-    scaleWidth: 2);
+  // Initial top-left position
+  vertices: [
+    V(0, 1), // Top-left (snap reference)
+    V(1, 0),
+    V(1, 1),
+  ],
+)..grid = answerGrid;
 SnappablePolygon yellowParralelogram = SnappablePolygon(
-  grid: targetGrid,
-  vertices: parrallelagramVertices,
-  polyColor: const Color.fromARGB(255, 219, 243, 33),
+  vertices: [
+    V(1, 0), // Top-left (snap reference)
+    V(4, 0),
+    V(3, 2),
+    V(0, 2),
+  ],
+)..grid = answerGrid;
+SnappablePolygon lShape = SnappablePolygon(
+  vertices: [
+    V(0, 0), // Top-left (snap reference)
+    V(3, 0),
+    V(3, 1),
+    V(1, 1),
+    V(1, 2),
+    V(0, 2),
+  ],
+)..grid = answerGrid;
+
+class QuestionData {
+  final List<SnappablePolygon> objects;
+  final List<V> questionPositions;
+  final List<V> answerPositions;
+
+  QuestionData({
+    required this.objects,
+    required this.questionPositions,
+    required this.answerPositions,
+  });
+}
+
+final question1 = QuestionData(
+  objects: [
+    square.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.red,
+    triangle.copyWith()..color = Colors.blue,
+    yellowParralelogram.copyWith()..color = Colors.yellow,
+  ],
+  questionPositions: [V(1, 4), V(1, 1), V(1, 5)],
+  answerPositions: [V(6, 5), V(7, 2), V(6, 3)],
+);
+final question2 = QuestionData(
+  objects: [
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.red,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.black
+      ..rotation = 90,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.orange
+      ..rotation = 180,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.yellow
+      ..rotation = 270,
+  ],
+  questionPositions: [V(1, 0), V(1, 6), V(4, 4), V(1, 4)],
+  answerPositions: [V(6, 1), V(8, 1), V(8, 3), V(6, 3)],
+);
+final question3 = QuestionData(
+  objects: [
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.red,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.black
+      ..rotation = 90,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.orange
+      ..rotation = 180,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.yellow
+      ..rotation = 270,
+    square.copyWith()
+      ..scaleHeight = 3
+      ..scaleWidth = 5
+      ..color = Colors.green,
+  ],
+  questionPositions: [V(1, 0), V(1, 6), V(4, 4), V(1, 4), V(6, 0)],
+  answerPositions: [V(5, 3), V(7, 3), V(7, 1), V(5, 1), V(5, 5)],
+);
+final question4 = QuestionData(
+  objects: [
+    lShape.copyWith()..color = Colors.green,
+    lShape.copyWith()
+      ..rotation = 90
+      ..color = Colors.red,
+    square.copyWith()
+      ..rotation = 90
+      ..scaleHeight = 4
+      ..scaleWidth = 3
+      ..color = Colors.black,
+    lShape.copyWith()
+      ..rotation = 270
+      ..color = Colors.purple,
+    lShape.copyWith()..color = Colors.orange,
+  ],
+  questionPositions: [V(1, 0), V(10, 1), V(4, 4), V(1, 4), V(6, 0)],
+  answerPositions: [V(1, 0), V(2, 1), V(9, 0), V(4, 1), V(6, 0)],
 );
 
-List<SnappablePolygon> question1 = [
-  redRectangle.copyWith()..initialPosition = Vector2(1, 4),
-  triangle.copyWith()..initialPosition = Vector2(1, 1),
-  yellowParralelogram.copyWith()..initialPosition = Vector2(1, 5),
-];
-List<SnappablePolygon> answer1 = [
-  redRectangle.copyWith(grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(6, 5),
-  triangle.copyWith(grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(7, 2),
-  yellowParralelogram.copyWith(grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(6, 3),
-];
-
-List<SnappablePolygon> question2 = [
-  square2x2.copyWith()..initialPosition = Vector2(1, 4),
-  square2x2.copyWith(polyColor: Colors.blue)..initialPosition = Vector2(4, 4),
-  square2x2.copyWith(polyColor: Colors.blue)..initialPosition = Vector2(7, 4),
-  square2x2.copyWith(polyColor: Colors.blue)..initialPosition = Vector2(1, 0),
-  square2x2.copyWith(polyColor: Colors.blue)..initialPosition = Vector2(6, 0),
-];
-List<SnappablePolygon> answer2 = [
-  square2x2.copyWith(grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(5, 3),
-  square2x2.copyWith(
-      polyColor: Colors.blue, grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(3, 3),
-  square2x2.copyWith(
-      polyColor: Colors.blue, grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(7, 3),
-  square2x2.copyWith(
-      polyColor: Colors.blue, grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(5, 1),
-  square2x2.copyWith(
-      polyColor: Colors.blue, grid: solutionGrid, isDraggable: false)
-    ..initialPosition = Vector2(5, 5),
-];
-
-List<SnappablePolygon> question3 = [
-  triangle.copyWith(polyColor: Colors.red, rotation: 90)
-    ..initialPosition = Vector2(1, 0),
-  triangle.copyWith(polyColor: Colors.black, rotation: 270)
-    ..initialPosition = Vector2(1, 6),
-  triangle.copyWith(polyColor: Colors.orange)..initialPosition = Vector2(4, 4),
-  triangle.copyWith(polyColor: Colors.yellow, rotation: 180)
-    ..initialPosition = Vector2(1, 4),
-];
-List<SnappablePolygon> answer3 = question3.map((e) {
-  return e.copyWith(grid: solutionGrid, isDraggable: false)
-    ..initialPosition = answer3pos[question3.indexOf(e)];
-}).toList();
-List<Vector2> answer3pos = [
-  Vector2(6, 1),
-  Vector2(4, 3),
-  Vector2(4, 1),
-  Vector2(6, 3),
-];
-
-List<List<SnappablePolygon>> questions = [question1, question2, question3];
-List<List<SnappablePolygon>> answers = [answer1, answer2, answer3];
+List<QuestionData> questionData = [question1, question2, question3, question4];
+List<List<SnappablePolygon>> questions = questionData
+    .map((e) => List.generate(
+          e.objects.length,
+          (index) => e.objects[index].copyWith(grid: questionGrid)
+            ..initialPosition = e.questionPositions[index],
+        ))
+    .toList();
+List<List<SnappablePolygon>> answers = questionData
+    .map((e) => List.generate(
+          e.objects.length,
+          (index) =>
+              e.objects[index].copyWith(grid: answerGrid, isDraggable: false)
+                ..initialPosition = e.answerPositions[index],
+        ))
+    .toList();
