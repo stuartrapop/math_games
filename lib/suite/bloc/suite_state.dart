@@ -1,53 +1,65 @@
 part of 'suite_bloc.dart';
 
-List<int> _partAValues = [];
-List<int> get partAValues => _partAValues;
-List<int> _partBValues = [];
-List<int> get partBValues => _partBValues;
+enum QuestionStatus { correct, incorrect, unanswered }
 
 class SuiteState extends Equatable {
-  final List<int> partA;
-  final List<int> partB;
-  final List<bool> matchStatus;
+  final List<QuestionData> questionList;
+  final List<QuestionStatus> questionStatus;
+  final List<List<Vector2>> initialQuestionPositions;
+  final List<List<Vector2>> currentQuestionPositions;
+  final List<List<Vector2>> answerPositions;
+  final int currentQuestionIndex;
 
-  const SuiteState({
-    required this.partA,
-    required this.partB,
-    required this.matchStatus,
-  });
-
-  SuiteState.reset()
-      : this(
-          partA: (() {
-            _partAValues = generatePartAValues(number: 3);
-            _partBValues = generatePartBValues(leftValues: _partAValues);
-            return _partAValues;
-          })(),
-          partB: _partBValues,
-          matchStatus: List.filled(3, false),
-        );
-
-  SuiteState copyWith({
-    List<int>? partA,
-    List<int>? partB,
-    List<bool>? matchStatus,
-  }) {
-    print("matchStatus: $matchStatus");
-    return SuiteState(
-      partA: partA ?? this.partA,
-      partB: partB ?? this.partB,
-      matchStatus: matchStatus ?? this.matchStatus,
-    );
-  }
+  SuiteState({
+    required this.questionList,
+    List<QuestionStatus>? questionStatus,
+    List<List<Vector2>>? currentQuestionPositions,
+    int? currentQuestionIndex,
+  })  : questionStatus = questionStatus ??
+            List.filled(questionList.length, QuestionStatus.unanswered),
+        currentQuestionIndex = currentQuestionIndex ?? 0,
+        initialQuestionPositions =
+            questionList.map((q) => q.questionPositions).toList(),
+        currentQuestionPositions = currentQuestionPositions ??
+            questionList.map((q) => q.questionPositions).toList(),
+        answerPositions = questionList.map((q) => q.answerPositions).toList();
 
   @override
-  List<Object> get props => [partA, partB, matchStatus];
+  List<Object?> get props => [
+        questionList
+            .map((q) => q.toString())
+            .toList(), // Ensures deep comparison
+        List.of(questionStatus), // Ensures new reference
+        currentQuestionIndex,
+        currentQuestionPositions,
+      ];
+
+  @override
+  String toString() {
+    return 'SuiteState(questions: ${questionList.length}, status: $questionStatus, currentIndex: $currentQuestionIndex)';
+  }
+
+  SuiteState copyWith({
+    List<QuestionData>? questionList,
+    List<QuestionStatus>? questionStatus,
+    List<List<Vector2>>? currentQuestionPositions,
+    int? currentQuestionIndex,
+  }) {
+    return SuiteState(
+      questionList: questionList ?? List.from(this.questionList),
+      questionStatus: questionStatus ?? List.from(this.questionStatus),
+      currentQuestionPositions:
+          currentQuestionPositions ?? List.from(this.currentQuestionPositions),
+      currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
+    );
+  }
 }
 
-final class CeriseInitial extends SuiteState {
-  const CeriseInitial({
-    required super.partA,
-    required super.partB,
-    required super.matchStatus,
-  });
+final class SuiteInitial extends SuiteState {
+  SuiteInitial({required super.questionList})
+      : super(
+          questionStatus:
+              List.filled(questionList.length, QuestionStatus.unanswered),
+          currentQuestionIndex: 5,
+        );
 }

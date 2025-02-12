@@ -1,5 +1,6 @@
 import 'package:first_math/suite/bloc/suite_bloc.dart';
 import 'package:first_math/suite/suite_game.dart';
+import 'package:first_math/suite/suite_world.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
@@ -51,6 +52,8 @@ class Menu extends StatelessWidget {
                   onPressed: () async {
                     // Hide the overlay
                     bloc.add(const GameReset());
+                    SuiteWorld world = game.world as SuiteWorld;
+                    world.gameReset();
                     await Future.delayed(const Duration(milliseconds: 100));
                     game.overlays.remove('menu');
 

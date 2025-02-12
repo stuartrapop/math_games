@@ -135,11 +135,25 @@ bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
   List<Vector2> thisPolygon = draggedPolygon.adjustedVertices
       .map((v) => v + draggedPolygon.position)
       .toList();
+  List<Vector2> thisInnerPolygon = draggedPolygon.adjustedInnerVertices
+      .map((v) => v + draggedPolygon.position)
+      .toList();
   List<Vector2> otherPolygon =
       other.adjustedVertices.map((v) => v + other.position).toList();
-
+  List<Vector2> otherInnerPolygon =
+      other.adjustedInnerVertices.map((v) => v + other.position).toList();
   List<List<Vector2>> draggedConvexPolygons = [];
-  if (isConvexPolygon(thisPolygon)) {
+  if (thisInnerPolygon.isNotEmpty) {
+    print("thisInnerPolygon: $thisInnerPolygon");
+    final triangles = triangulatePolygonWithHoles(
+        outerPolygon: thisPolygon, holes: [thisInnerPolygon]);
+    print("triangles: $triangles");
+    for (int i = 0; i < triangles.length; i++) {
+      final relativeTriangle =
+          triangles[i].map((v) => v - draggedPolygon.topLeft).toList();
+      draggedConvexPolygons.add(relativeTriangle);
+    }
+  } else if (isConvexPolygon(thisPolygon)) {
     draggedConvexPolygons = [thisPolygon];
   } else {
     List<int> indices = Earcut.triangulateFromPoints(
@@ -156,7 +170,18 @@ bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
   }
 
   List<List<Vector2>> otherConvexPolygons = [];
-  if (isConvexPolygon(otherPolygon)) {
+
+  if (otherInnerPolygon.isNotEmpty) {
+    print("thisInnerPolygon: $otherInnerPolygon");
+    final triangles = triangulatePolygonWithHoles(
+        outerPolygon: otherPolygon, holes: [otherInnerPolygon]);
+    print("triangles: $triangles");
+    for (int i = 0; i < triangles.length; i++) {
+      final relativeTriangle =
+          triangles[i].map((v) => v - other.topLeft).toList();
+      otherConvexPolygons.add(relativeTriangle);
+    }
+  } else if (isConvexPolygon(otherPolygon)) {
     otherConvexPolygons = [otherPolygon];
   } else {
     List<int> indices = Earcut.triangulateFromPoints(

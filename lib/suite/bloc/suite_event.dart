@@ -7,18 +7,41 @@ sealed class SuiteEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class CorrectMatch extends SuiteEvent {
-  const CorrectMatch(this.partBPosition);
-
-  final int partBPosition;
-
-  @override
-  List<Object> get props => [partBPosition];
-}
-
 class GameReset extends SuiteEvent {
   const GameReset();
 
   @override
   List<Object> get props => [];
+}
+
+class QuestionAnswered extends SuiteEvent {
+  final int questionIndex;
+  final bool isCorrect;
+  const QuestionAnswered(
+      {required this.questionIndex, required this.isCorrect});
+
+  @override
+  List<Object> get props => [questionIndex, isCorrect];
+}
+
+class NextQuestion extends SuiteEvent {
+  const NextQuestion();
+
+  @override
+  List<Object> get props => [];
+}
+
+class PolygonMoved extends SuiteEvent {
+  final int questionIndex;
+  final int polygonIndex;
+  final Vector2 newPosition;
+
+  const PolygonMoved({
+    required this.questionIndex,
+    required this.polygonIndex,
+    required this.newPosition,
+  });
+
+  @override
+  List<Object> get props => [questionIndex, polygonIndex, newPosition];
 }

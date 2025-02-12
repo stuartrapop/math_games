@@ -1,4 +1,5 @@
 import 'package:first_math/suite/bloc/suite_bloc.dart';
+import 'package:first_math/suite/data/questions.dart';
 import 'package:first_math/suite/suite_game.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -16,22 +17,19 @@ class _SuiteContainerState extends State<SuiteContainer> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SuiteBloc(),
+      create: (context) => SuiteBloc(questions: questionData),
       child: Builder(
         builder: (context) {
-          final suiteBloc = context.read<SuiteBloc>();
+          final suiteBloc = context.read<SuiteBloc>(); // ✅ Get SuiteBloc
+
           return GameWidget(
-            game:
-                SuiteGame(returnHome: widget.returnHome, suiteBloc: suiteBloc),
+            game: SuiteGame(
+              returnHome: widget.returnHome,
+              suiteBloc: suiteBloc, // ✅ Pass the bloc instance
+            ),
           );
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    print("SuiteContainer dispose");
-    super.dispose();
   }
 }

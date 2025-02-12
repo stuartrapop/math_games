@@ -1,4 +1,4 @@
-import 'package:first_math/suite/utils/constants.dart';
+import 'package:first_math/suite/utils/sprite_utils.dart';
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
 

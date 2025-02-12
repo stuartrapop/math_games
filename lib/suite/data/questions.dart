@@ -1,69 +1,10 @@
 import 'package:first_math/suite/components/grid_component.dart';
 import 'package:first_math/suite/components/snappable_polygon.dart';
+import 'package:first_math/suite/data/shapes.dart';
 import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 
 typedef V = Vector2;
-
-GridComponent answerGrid = GridComponent(
-  gridSize: 35,
-  rows: 8,
-  cols: 14,
-  lineWidth: 2,
-)..position = V(250, 100);
-
-GridComponent questionGrid = GridComponent(
-  gridSize: 35,
-  rows: 8,
-  cols: 14,
-  lineWidth: 2,
-)..position = V(250, 400);
-
-SnappablePolygon square = SnappablePolygon(
-  vertices: [
-    V(0, 0), // Top-left (snap reference)
-    V(1, 0),
-    V(1, 1),
-    V(0, 1),
-  ],
-)..grid = answerGrid;
-
-SnappablePolygon triangle = SnappablePolygon(
-  // Initial top-left position
-  vertices: [
-    V(0, 1), // Top-left (snap reference)
-    V(1, 0),
-    V(1, 1),
-  ],
-)..grid = answerGrid;
-SnappablePolygon yellowParralelogram = SnappablePolygon(
-  vertices: [
-    V(1, 0), // Top-left (snap reference)
-    V(4, 0),
-    V(3, 2),
-    V(0, 2),
-  ],
-)..grid = answerGrid;
-SnappablePolygon lShape = SnappablePolygon(
-  vertices: [
-    V(0, 0), // Top-left (snap reference)
-    V(3, 0),
-    V(3, 1),
-    V(1, 1),
-    V(1, 2),
-    V(0, 2),
-  ],
-)..grid = answerGrid;
-
-SnappablePolygon polygonWithHole = SnappablePolygon(
-  vertices: [Vector2(0, 0), Vector2(20, 0), Vector2(20, 20), Vector2(0, 20)],
-  innerVertices: [
-    Vector2(5, 5),
-    Vector2(15, 5),
-    Vector2(15, 15),
-    Vector2(5, 15)
-  ],
-)..grid = answerGrid;
 
 class QuestionData {
   final List<SnappablePolygon> objects;
@@ -164,7 +105,11 @@ final question4 = QuestionData(
 );
 final question5 = QuestionData(
   objects: [
-    square.copyWith()..color = Colors.green,
+    square.copyWith()
+      ..rotation = 90
+      ..scaleHeight = 4
+      ..scaleWidth = 3
+      ..color = Colors.pinkAccent,
     lShape.copyWith()
       ..rotation = 90
       ..color = Colors.red,
@@ -180,9 +125,68 @@ final question5 = QuestionData(
       ..scaleHeight = 0.2
       ..scaleWidth = 0.2
       ..color = Colors.orange,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.green
+      ..rotation = 180,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.yellow
+      ..rotation = 0,
   ],
-  questionPositions: [V(1, 0), V(10, 1), V(4, 4), V(1, 4), V(6, 0)],
-  answerPositions: [V(1, 0), V(2, 1), V(9, 0), V(4, 1), V(6, 0)],
+  questionPositions: [
+    V(0, 0),
+    V(8, 5),
+    V(0, 4),
+    V(10, 5),
+    V(10, 0),
+    V(7, 6),
+    V(4, 6)
+  ],
+  answerPositions: [
+    V(7, 4),
+    V(8, 0),
+    V(4, 4),
+    V(8, 1),
+    V(4, 0),
+    V(5, 1),
+    V(5, 1)
+  ],
+);
+final question6 = QuestionData(
+  objects: [
+    square.copyWith()
+      ..rotation = 90
+      ..scaleHeight = 4
+      ..scaleWidth = 2
+      ..color = Colors.pinkAccent,
+    square.copyWith()
+      ..rotation = 90
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.pinkAccent,
+    square.copyWith()
+      ..rotation = 90
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.pinkAccent,
+    lShape.copyWith()
+      ..rotation = 90
+      ..color = Colors.pinkAccent,
+    lShape.copyWith()
+      ..rotation = 270
+      ..color = Colors.pinkAccent,
+  ],
+  questionPositions: [
+    V(0, 0),
+    V(2, 2),
+    V(7, 4),
+    V(8, 0),
+    V(4, 4),
+  ],
+  answerPositions: [V(1, 1), V(5, 3), V(5, 1), V(9, 1), V(9, 2)],
 );
 
 List<QuestionData> questionData = [
@@ -190,20 +194,22 @@ List<QuestionData> questionData = [
   question2,
   question3,
   question4,
-  question5
+  question5,
+  question6,
 ];
-List<List<SnappablePolygon>> questions = questionData
-    .map((e) => List.generate(
-          e.objects.length,
-          (index) => e.objects[index].copyWith(grid: questionGrid)
-            ..initialPosition = e.questionPositions[index],
-        ))
-    .toList();
-List<List<SnappablePolygon>> answers = questionData
-    .map((e) => List.generate(
-          e.objects.length,
-          (index) =>
-              e.objects[index].copyWith(grid: answerGrid, isDraggable: false)
-                ..initialPosition = e.answerPositions[index],
-        ))
-    .toList();
+
+List<SnappablePolygon> getSnappablePolygonsFromQuestion({
+  required QuestionData questionData,
+  required List<Vector2> positions,
+  required int questionIndex,
+  required GridComponent grid,
+}) {
+  return questionData.objects.map((sp) {
+    return sp.copyWith(
+      questionIndex: questionIndex,
+      polygonIndex: questionData.objects.indexOf(sp),
+      upperLeftPosition: positions[questionData.objects.indexOf(sp)],
+      isDraggable: true,
+    )..grid = grid;
+  }).toList();
+}

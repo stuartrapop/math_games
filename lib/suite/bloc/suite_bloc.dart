@@ -1,33 +1,66 @@
 import 'package:equatable/equatable.dart';
-import 'package:first_math/cerise_game/helpers/utils.dart';
+import 'package:first_math/suite/data/questions.dart';
+import 'package:flame/components.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'suite_event.dart';
 part 'suite_state.dart';
 
 class SuiteBloc extends Bloc<SuiteEvent, SuiteState> {
-  SuiteBloc()
-      : super(CeriseInitial(
-            partA: [], partB: [], matchStatus: List.filled(3, false))) {
-    on<SuiteEvent>((event, emit) {
-      // TODO: implement event handler
+  SuiteBloc({required List<QuestionData> questions})
+      : super(SuiteInitial(questionList: questions)) {
+    on<GameReset>((event, emit) {
+      final newState = SuiteState(
+        questionList: List.from(state.questionList), // Ensure a new list
+        questionStatus:
+            List.filled(state.questionList.length, QuestionStatus.unanswered),
+        currentQuestionIndex: 0,
+      );
+      emit(newState); // 🔥 Ensure state is emitted
     });
 
-    on<GameReset>(
-      (event, emit) => emit(
-        SuiteState.reset(),
-      ),
-    );
-    on<CorrectMatch>((event, emit) {
-      int partBPosition = event.partBPosition;
+    on<QuestionAnswered>((event, emit) async {
+      int questionIndex = event.questionIndex;
+      bool isCorrect = event.isCorrect;
 
-      // Create a new list to ensure state change
-      List<bool> updatedMatchStatus = List.from(state.matchStatus);
-      updatedMatchStatus[partBPosition] = true;
+      List<QuestionStatus> updatedStatus = List.from(state.questionStatus);
+      updatedStatus[questionIndex] =
+          isCorrect ? QuestionStatus.correct : QuestionStatus.incorrect;
 
       emit(
-        state.copyWith(matchStatus: updatedMatchStatus),
-      );
+        state.copyWith(
+          questionList: state.questionList,
+          questionStatus: updatedStatus,
+          currentQuestionIndex: state.currentQuestionIndex,
+        ),
+      ); // 🔥 Ensure state is emitted
+    });
+
+    on<NextQuestion>((event, emit) async {
+      emit(
+        state.copyWith(
+          currentQuestionIndex: state.currentQuestionIndex + 1,
+        ),
+      ); // 🔥 Ensure state is emitted
+    });
+
+    on<PolygonMoved>((event, emit) {
+      print(
+          "📌 Polygon Moved: Q${event.questionIndex} P${event.polygonIndex} → ${event.newPosition}");
+
+      // ✅ Create a deep copy of the answers list to trigger Bloc state change
+      List<List<Vector2>> updatedQuestionPositions = state
+          .currentQuestionPositions
+          .map(
+              (innerList) => innerList.map((vector) => vector.clone()).toList())
+          .toList();
+
+      // ✅ Update only the moved polygon
+      updatedQuestionPositions[event.questionIndex][event.polygonIndex] =
+          event.newPosition;
+
+      // ✅ Emit the new state
+      emit(state.copyWith(currentQuestionPositions: updatedQuestionPositions));
     });
   }
 }
