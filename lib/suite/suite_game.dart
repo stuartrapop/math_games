@@ -17,7 +17,7 @@ class SuiteGame extends FlameGame
         DoubleTapDetector,
         TapDetector,
         HasGameRef,
-        HasCollisionDetection,
+        // HasCollisionDetection,
         LongPressDetector {
   static const description = '''
         Creation of set of stacked blocks where the number of blocks in each stack represent the number of digits in a number.
@@ -27,11 +27,15 @@ class SuiteGame extends FlameGame
   // controls if the engine is paused or not
   final SuiteBloc suiteBloc;
   final Function returnHome;
+  late final SuiteWorld suiteWorld;
 
   SuiteGame({
     required this.suiteBloc,
     required this.returnHome,
-  }) : super();
+  }) : super() {
+    suiteWorld =
+        SuiteWorld(returnHome: returnHome); // ✅ Only create one instance
+  }
   bool running = true;
   @override
   Color backgroundColor() => const Color.fromARGB(255, 0, 0, 0);
@@ -41,13 +45,12 @@ class SuiteGame extends FlameGame
   //
   late final RouterComponent router;
   List<PositionComponent> components = [];
-  late final SuiteWorld suiteWorld;
 
   @override
   Future<void> onLoad() async {
     super.onLoad();
     // Set up the initial screen layout
-    suiteWorld = SuiteWorld(returnHome: returnHome);
+    // suiteWorld = SuiteWorld(returnHome: returnHome);
     world = suiteWorld;
 
     // ✅ Make sure it's visible

@@ -110,6 +110,9 @@ double findMinSeparation(List<Vector2> a, List<Vector2> b) {
 
 /// **Check if two polygons are colliding**
 bool isCollidingPolygonPolygon(List<Vector2> a, List<Vector2> b) {
+  print("🔴 Checking collision between two polygons:");
+  print("a: ${a.map((v) => v / 35).toList()};");
+  print("b: ${b.map((v) => v / 35).toList()}");
   const double epsilon = 1e-6;
   double sep1 = findMinSeparation(a, b);
   double sep2 = findMinSeparation(b, a);
@@ -132,6 +135,8 @@ bool isCollidingPolygonPolygon(List<Vector2> a, List<Vector2> b) {
 }
 
 bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
+  print("draggedPolygon: ${draggedPolygon.position}");
+  print("other: ${other.position}");
   List<Vector2> thisPolygon = draggedPolygon.adjustedVertices
       .map((v) => v + draggedPolygon.position)
       .toList();

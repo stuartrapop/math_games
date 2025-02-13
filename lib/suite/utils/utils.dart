@@ -38,23 +38,3 @@ bool validatePolygonCount(
     List<SnappablePolygon> question, List<SnappablePolygon> answer) {
   return question.length == answer.length;
 }
-
-bool comparePolygons({
-  required List<SnappablePolygon> questions,
-  required List<Vector2> answerPositions,
-  required List<Vector2> questionPositions,
-}) {
-  List<Vector2> shiftedQuestionPosition =
-      getShiftedPositions(positions: questionPositions);
-  List<Vector2> shiftedAnswerPositions =
-      getShiftedPositions(positions: answerPositions);
-  print("Question positions: $questionPositions");
-  print("Answer positions: $answerPositions");
-
-  for (int i = 0; i < questions.length; i++) {
-    if (shiftedAnswerPositions[i] != shiftedQuestionPosition[i]) {
-      return false;
-    }
-  }
-  return true;
-}

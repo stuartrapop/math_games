@@ -10,10 +10,15 @@ class Frame extends PositionComponent with HasGameRef<SuiteGame> {
   double borderWidth;
   Function returnHome;
   Function validate;
-  Frame(
-      {required this.borderWidth,
-      required this.returnHome,
-      required this.validate}) {
+  Function previous;
+  Function giveHint;
+  Frame({
+    required this.borderWidth,
+    required this.returnHome,
+    required this.validate,
+    required this.giveHint,
+    required this.previous,
+  }) {
     anchor = Anchor.center;
   }
   @override
@@ -46,7 +51,7 @@ class Frame extends PositionComponent with HasGameRef<SuiteGame> {
         callback: () {
           // Add the 'home' overlay
 
-          game.router.pushReplacementNamed('menu');
+          previous();
           // router.pop();
         },
       ),
@@ -68,6 +73,9 @@ class Frame extends PositionComponent with HasGameRef<SuiteGame> {
         position: Vector2(width - distanceFromEdge, distanceFromEdge),
         size: 100,
         spriteName: 'question48.png',
+        callback: () {
+          giveHint();
+        },
       ),
     );
 

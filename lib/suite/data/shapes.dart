@@ -26,6 +26,42 @@ SnappablePolygon square = SnappablePolygon(
   grid: tempGrid,
 );
 
+SnappablePolygon octogon = SnappablePolygon(
+  vertices: [
+    V(1, 0),
+    V(2, 0),
+    V(3, 1),
+    V(3, 2),
+    V(2, 3),
+    V(1, 3),
+    V(0, 2),
+    V(0, 1)
+  ],
+  grid: tempGrid,
+);
+SnappablePolygon hexagon = SnappablePolygon(
+  vertices: [
+    V(1, 0),
+    V(2, 0),
+    V(3, 1),
+    V(2, 2),
+    V(1, 2),
+    V(0, 1),
+  ],
+  grid: tempGrid,
+);
+SnappablePolygon polygon5 = SnappablePolygon(
+  vertices: [
+    V(1, 0),
+    V(2, 0),
+    V(2, 1),
+    V(2, 2),
+    V(1, 2),
+    V(0, 1),
+  ],
+  grid: tempGrid,
+);
+
 SnappablePolygon triangle = SnappablePolygon(
   // Initial top-left position
   vertices: [

@@ -14,22 +14,29 @@ class SuiteContainer extends StatefulWidget {
 }
 
 class _SuiteContainerState extends State<SuiteContainer> {
+  late SuiteGame suiteGame;
+  late SuiteBloc suiteBloc;
+  @override
+  void initState() {
+    super.initState();
+    suiteBloc = SuiteBloc(questions: questionData);
+    suiteGame = SuiteGame(
+      returnHome: widget.returnHome,
+      suiteBloc: suiteBloc, // ✅ Use a single instance
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SuiteBloc(questions: questionData),
-      child: Builder(
-        builder: (context) {
-          final suiteBloc = context.read<SuiteBloc>(); // ✅ Get SuiteBloc
-
-          return GameWidget(
-            game: SuiteGame(
-              returnHome: widget.returnHome,
-              suiteBloc: suiteBloc, // ✅ Pass the bloc instance
-            ),
-          );
-        },
-      ),
+    return BlocProvider.value(
+      value: suiteBloc, // ✅ Use existing bloc
+      child: GameWidget(game: suiteGame), // ✅ Use existing game
     );
+  }
+
+  @override
+  void dispose() {
+    suiteBloc.close(); // ✅ Cleanup bloc when widget is removed
+    super.dispose();
   }
 }

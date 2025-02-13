@@ -36,12 +36,13 @@ class SuiteBloc extends Bloc<SuiteEvent, SuiteState> {
       ); // 🔥 Ensure state is emitted
     });
 
-    on<NextQuestion>((event, emit) async {
-      emit(
-        state.copyWith(
-          currentQuestionIndex: state.currentQuestionIndex + 1,
-        ),
-      ); // 🔥 Ensure state is emitted
+    on<NextQuestion>((event, emit) {
+      print("🔥 NextQuestion received → Updating to index: ${event.nextIndex}");
+
+      // Prevent out-of-bounds errors
+      if (event.nextIndex >= state.questionList.length) return;
+      if (event.nextIndex < 0) return;
+      emit(state.copyWith(currentQuestionIndex: event.nextIndex));
     });
 
     on<PolygonMoved>((event, emit) {

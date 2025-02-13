@@ -1,91 +1,209 @@
-import 'dart:collection';
+import 'dart:ui';
 
+import 'package:first_math/suite/components/grid_component.dart';
 import 'package:first_math/suite/components/snappable_polygon.dart';
-import 'package:first_math/suite/data/shapes.dart';
 import 'package:flame/components.dart';
+import 'package:polybool/polybool.dart';
 
-List<SnappablePolygon> mergeAdjacentPolygons(List<SnappablePolygon> polygons) {
-  List<SnappablePolygon> mergedPolygons = [];
-  Set<SnappablePolygon> visited = {};
+class CellColorClass {
+  Map<Color, double> colorDistribution = {};
 
-  for (var polygon in polygons) {
-    if (visited.contains(polygon)) continue; // Skip already merged polygons
+  void updateColor(Color color, double area) {
+    colorDistribution.update(color, (existingArea) => existingArea + area,
+        ifAbsent: () => area);
+  }
 
-    List<SnappablePolygon> connectedGroup =
-        _findConnectedPolygons(polygon, polygons, visited);
-
-    if (connectedGroup.length > 1) {
-      // ✅ Merge polygons into a single shape
-      SnappablePolygon mergedPolygon = _mergePolygonGroup(connectedGroup);
-      mergedPolygons.add(mergedPolygon);
-    } else {
-      mergedPolygons.add(polygon);
+  void normalize() {
+    double totalArea = colorDistribution.values.fold(0, (a, b) => a + b);
+    if (totalArea > 0) {
+      colorDistribution.updateAll((key, value) => value / totalArea);
     }
   }
 
-  return mergedPolygons;
+  @override
+  String toString() {
+    return colorDistribution.toString();
+  }
 }
 
-// 🔹 Find adjacent polygons of the same color
-List<SnappablePolygon> _findConnectedPolygons(SnappablePolygon start,
-    List<SnappablePolygon> allPolygons, Set<SnappablePolygon> visited) {
-  List<SnappablePolygon> group = [];
-  Queue<SnappablePolygon> queue = Queue()..add(start);
+Polygon _polygonIntersectsCell(
+    List<Coordinate> polygon, List<Coordinate> cellVertices) {
+  final poly1 = Polygon(regions: [polygon]);
+  final poly2 = Polygon(regions: [cellVertices]);
+  return poly1.intersect(poly2);
+}
 
-  while (queue.isNotEmpty) {
-    SnappablePolygon current = queue.removeFirst();
-    if (visited.contains(current)) continue;
+double _calculatePolygonArea(List<Coordinate> vertices) {
+  if (vertices.length < 3) return 0; // Not a valid polygon
 
-    visited.add(current);
-    group.add(current);
+  double area = 0.0;
+  for (int i = 0; i < vertices.length; i++) {
+    Coordinate current = vertices[i];
+    Coordinate next = vertices[(i + 1) % vertices.length];
+    area += (current.x * next.y) - (next.x * current.y);
+  }
+  return area.abs() / 2.0; // Always return positive area
+}
 
-    for (var neighbor in allPolygons) {
-      if (!visited.contains(neighbor) &&
-          _arePolygonsAdjacent(current, neighbor)) {
-        queue.add(neighbor);
+/// ✅ **Optimized: Process only affected grid cells!**
+List<List<CellColorClass>> processGridCells({
+  required GridComponent grid,
+  required List<SnappablePolygon> polygons,
+  required List<Vector2> positions,
+}) {
+  // ✅ Step 1: Initialize blank grid
+  List<List<CellColorClass>> gridColorMap = List.generate(
+    grid.rows,
+    (_) => List.generate(grid.cols, (_) => CellColorClass()),
+  );
+
+  // ✅ Step 2: Process each polygon
+
+  for (int i = 0; i < polygons.length; i++) {
+    SnappablePolygon polygon = polygons[i];
+    Vector2 position = positions[i];
+    print("🔍 Processing Polygon $i at $position");
+    double width = polygon.polygonWidth / grid.gridSize;
+    double height = polygon.polygonHeight / grid.gridSize;
+    // print("🔍 Polygon Width: ${width}");
+    // print("🔍 Polygon Height: ${height}");
+    // // 🔥 Get affected grid cell indices (Bounding Box Optimization)
+    int minCol = (position.x).floor();
+    int maxCol = ((position.x + width)).ceil();
+    int minRow = (position.y).floor();
+    int maxRow = ((position.y + height)).ceil();
+
+    print("🔍 Min Max $i at [$minCol, $minRow], $maxCol, $maxRow");
+
+    // 🔥 Process only relevant grid cells
+    for (int col = minCol; col < maxCol; col++) {
+      for (int row = minRow; row < maxRow; row++) {
+        if (col < 0 || row < 0 || col >= grid.cols || row >= grid.rows) {
+          continue; // 🔹 Skip out-of-bounds cells
+        }
+
+        // 🔥 Convert grid cell to coordinates
+        List<Coordinate> cellVertices = [
+          Coordinate(col.toDouble(), row.toDouble()),
+          Coordinate(col.toDouble() + 1, row.toDouble()),
+          Coordinate(col.toDouble() + 1, row.toDouble() + 1),
+          Coordinate(col.toDouble(), row.toDouble() + 1),
+        ];
+
+        // 🔹 Get polygon in grid space
+        List<Coordinate> polygonVertices = polygon.adjustedVertices.map((v) {
+          return Coordinate(v.x / grid.gridSize + position.x,
+              v.y / grid.gridSize + position.y);
+        }).toList();
+
+        // 🔥 Find the intersectionr
+        Polygon intersection =
+            _polygonIntersectsCell(polygonVertices, cellVertices);
+        if (intersection.regions.isNotEmpty) {
+          double area = _calculatePolygonArea(intersection.regions.first);
+          gridColorMap[row][col].updateColor(polygon.color, area);
+        }
       }
     }
   }
 
-  return group;
-}
-
-// 🔹 Check if two polygons are adjacent (share an edge)
-bool _arePolygonsAdjacent(SnappablePolygon a, SnappablePolygon b) {
-  if (a.color != b.color) return false; // Must be the same color
-
-  Set<Vector2> sharedVertices =
-      a.vertices.toSet().intersection(b.vertices.toSet());
-
-  return sharedVertices.length == 2; // Must share exactly 2 vertices (one edge)
-}
-
-// 🔹 Merge a group of adjacent polygons into a single one
-SnappablePolygon _mergePolygonGroup(List<SnappablePolygon> group) {
-  List<Vector2> mergedVertices = _mergeVertices(group);
-
-  return SnappablePolygon(
-    vertices: mergedVertices,
-    isDraggable: group.first.isDraggable, // Preserve behavior
-    grid: tempGrid, // Use a temporary grid
-  )..color = group.first.color;
-  ;
-}
-
-// 🔹 Merge all vertices from adjacent polygons into one shape
-List<Vector2> _mergeVertices(List<SnappablePolygon> polygons) {
-  Set<Vector2> allVertices = {};
-
-  for (var polygon in polygons) {
-    allVertices.addAll(polygon.vertices);
+  // ✅ Step 3: Normalize color percentages
+  for (var row in gridColorMap) {
+    for (var cell in row) {
+      cell.normalize();
+    }
   }
 
-  return _orderVertices(allVertices.toList());
+  return gridColorMap;
 }
 
-// 🔹 Order vertices correctly to maintain a valid polygon shape
-List<Vector2> _orderVertices(List<Vector2> vertices) {
-  vertices.sort((a, b) =>
-      a.y.compareTo(b.y) == 0 ? a.x.compareTo(b.x) : a.y.compareTo(b.y));
-  return vertices;
+/// ✅ **Compare Two Processed Grids (Top & Bottom)**
+bool compareGrids({
+  required GridComponent grid,
+  required List<SnappablePolygon> questions,
+  required List<Vector2> questionPositions,
+  required List<Vector2> answerPositions,
+  double tolerance = 0.01, // Allow 1% difference
+}) {
+  Stopwatch stopwatch = Stopwatch()..start(); // ⏳ Start measuring
+
+  print("🔵 Starting color processing...");
+  List<List<CellColorClass>> questionGrid = processGridCells(
+      grid: grid, polygons: questions, positions: questionPositions);
+  List<List<CellColorClass>> answerGrid = processGridCells(
+      grid: grid, polygons: questions, positions: answerPositions);
+  stopwatch.stop();
+  print("✅ Color processing completed in ${stopwatch.elapsedMilliseconds} ms");
+
+  stopwatch.reset();
+  stopwatch.start();
+  // print("🔵 Starting grid comparison...");
+
+  // ✅ Compare Each Grid Cell
+  for (int row = 0; row < grid.rows; row++) {
+    for (int col = 0; col < grid.cols; col++) {
+      CellColorClass questionCell = questionGrid[row][col];
+      CellColorClass answerCell = answerGrid[row][col];
+
+      // print("🔍 Comparing Cell [${col}, ${row}]");
+      // print("   Question: ${questionCell.colorDistribution}");
+      // print("   Answer  : ${answerCell.colorDistribution}");
+
+      if (!_colorDistributionsMatch(questionCell.colorDistribution,
+          answerCell.colorDistribution, tolerance, 0.2, 0.0)) {
+        print("❌ Mismatch at [${col}, ${row}]");
+        stopwatch.stop();
+        print(
+            "✅ Grid comparison completed in ${stopwatch.elapsedMilliseconds} ms");
+        return false;
+      }
+    }
+  }
+
+  stopwatch.stop();
+  print("✅ Grid comparison completed in ${stopwatch.elapsedMilliseconds} ms");
+
+  print("✅ Grids Match!");
+  return true;
+}
+
+/// **Color Comparison With Tolerance**
+// bool _colorDistributionsMatch(
+//     Map<Color, double> a, Map<Color, double> b, double tolerance) {r
+//   for (var color in a.keys) {
+//     double aPercentage = a[color] ?? 0;
+//     double bPercentage = b[color] ?? 0;
+//     if ((aPercentage - bPercentage).abs() > tolerance) return false;
+//   }
+//   return true;
+// }
+
+bool _colorDistributionsMatch(
+    Map<Color, double> a,
+    Map<Color, double> b,
+    double tolerance,
+    double areaTolerance, // ✅ New: Allows slight area difference
+    double minCoverageThreshold // ✅ New: Minimum required coverage
+    ) {
+  // 🔹 First, ensure the color distributions match within tolerance
+  for (var color in a.keys) {
+    double aPercentage = a[color] ?? 0;
+    double bPercentage = b[color] ?? 0;
+    if ((aPercentage - bPercentage).abs() > tolerance) return false;
+  }
+  // area test might be too much
+  // 🔹 Then, check total area coverage consistency
+  double totalCoverageA = a.values.fold(0, (sum, v) => sum + v);
+  double totalCoverageB = b.values.fold(0, (sum, v) => sum + v);
+
+  // ✅ Ensure the total area covered is close within `areaTolerance`
+  if ((totalCoverageA - totalCoverageB).abs() > areaTolerance) return false;
+
+  // ✅ Ensure both cells have at least some coverage (avoids false positives)
+  if (totalCoverageA < minCoverageThreshold ||
+      totalCoverageB < minCoverageThreshold) {
+    return false;
+  }
+
+  return true; // 🎯 Both color & area match!
 }

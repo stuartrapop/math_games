@@ -25,10 +25,11 @@ class QuestionAnswered extends SuiteEvent {
 }
 
 class NextQuestion extends SuiteEvent {
-  const NextQuestion();
+  final int nextIndex;
+  const NextQuestion({required this.nextIndex});
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [nextIndex];
 }
 
 class PolygonMoved extends SuiteEvent {
