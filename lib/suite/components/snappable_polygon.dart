@@ -27,6 +27,9 @@ class SnappablePolygon extends PositionComponent
   double scaleWidth = 1.0;
   double scaleHeight = 1.0;
   double rotation = 0.0;
+  bool flipHorizontal;
+  bool flipVertical;
+
   int questionIndex;
   int polygonIndex;
 
@@ -48,8 +51,6 @@ class SnappablePolygon extends PositionComponent
   List<Vector2> innerVertices;
   Vector2? upperLeftPosition;
   bool isDraggable;
-  ui.Image? cachedImage; // 🎯 Store cached PNG image
-  late SpriteComponent spriteComponent;
 
   SnappablePolygon({
     required this.vertices,
@@ -59,6 +60,8 @@ class SnappablePolygon extends PositionComponent
     this.polygonIndex = -1,
     this.innerVertices = const [],
     this.isDraggable = true,
+    this.flipHorizontal = false,
+    this.flipVertical = false,
   });
   SnappablePolygon copyWith({
     List<Vector2>? vertices,
@@ -74,6 +77,8 @@ class SnappablePolygon extends PositionComponent
     Vector2? upperLeftPosition,
     Vector2? position,
     Vector2? size,
+    bool? flipHorizontal,
+    bool? flipVertical,
   }) {
     SnappablePolygon copiedPolygon = SnappablePolygon(
       grid: grid ?? this.grid,
@@ -86,6 +91,8 @@ class SnappablePolygon extends PositionComponent
       questionIndex: questionIndex ?? this.questionIndex,
       polygonIndex: polygonIndex ?? this.polygonIndex,
       upperLeftPosition: upperLeftPosition ?? this.upperLeftPosition,
+      flipHorizontal: flipHorizontal ?? this.flipHorizontal,
+      flipVertical: flipVertical ?? this.flipVertical,
     )
       ..color = color ?? this.color
       ..scaleWidth = scaleWidth ?? this.scaleWidth
@@ -140,7 +147,14 @@ class SnappablePolygon extends PositionComponent
   void _initializeAdjustedVertices() {
     // if (adjustedVertices.isNotEmpty) return; // Prevent double initialization
 
-    final List<Vector2> rotatedVertices = rotateVertices(vertices, rotation);
+    List<Vector2> rotatedVertices = rotateVertices(vertices, rotation);
+    // if (flipHorizontal) {
+    //   rotatedVertices = flipVerticesHorizontally(rotatedVertices);
+    // }
+    // if (flipVertical) {
+    //   rotatedVertices = flipVerticesVertically(rotatedVertices);
+    // }
+
     final List<Vector2> rotatedInnerVertices =
         rotateVertices(innerVertices, rotation);
     topLeft = getTopLeft(rotatedVertices);
@@ -173,6 +187,8 @@ class SnappablePolygon extends PositionComponent
   @override
   Future<void> onLoad() async {
     debugMode = false; // Show bounding box
+
+    priority = 1;
     _initializeAdjustedVertices();
 
     anchor = Anchor.topLeft;
@@ -195,10 +211,6 @@ class SnappablePolygon extends PositionComponent
         ], // White to Polygon Color
       ).createShader(path.getBounds());
     recordDrawing();
-
-    // await recordDrawing(); // 🏆 Convert polygon to image
-    // _setupSpriteComponent();
-    // add(spriteComponent);
     return super.onLoad();
   }
 
@@ -213,6 +225,16 @@ class SnappablePolygon extends PositionComponent
           v.x * sinA + v.y * cosA // Rotate Y
           );
     }).toList();
+  }
+
+  List<Vector2> flipVerticesHorizontally(List<Vector2> vertices) {
+    double minX = vertices.map((v) => v.x).reduce(min);
+    return vertices.map((v) => Vector2(minX - (v.x - minX), v.y)).toList();
+  }
+
+  List<Vector2> flipVerticesVertically(List<Vector2> vertices) {
+    double minY = vertices.map((v) => v.y).reduce(min);
+    return vertices.map((v) => Vector2(v.x, minY - (v.y - minY))).toList();
   }
 
   Future<void> demoMoveTo({
@@ -310,18 +332,10 @@ class SnappablePolygon extends PositionComponent
     final localPoint = event.localPosition;
     print("🖱 Drag Start Event at $localPoint");
     if (!isDraggable) return;
-
+    priority = 10;
     lastValidPosition = position.clone();
     super.onDragStart(event);
   }
-
-  // @override
-  // void onTapDown(TapDownEvent event) {
-  //   print("🖱 Tap Down Event at ${event.localPosition}");
-  //   Vector2 gridPoint = Vector2(1, 5);
-
-  //   demoMoveTo(gridPoint: gridPoint);
-  // }
 
   @override
   void onDragUpdate(DragUpdateEvent event) {
@@ -340,6 +354,7 @@ class SnappablePolygon extends PositionComponent
   @override
   void onDragEnd(DragEndEvent event) {
     if (!isDraggable) return;
+    priority = 1;
     final Vector2 snappedPosition = getClosestGridPoint(
         position: clampToGrid(
           position: position,
@@ -388,22 +403,6 @@ class SnappablePolygon extends PositionComponent
 
     // 🖼 Save the recording as a Picture
     cachedDrawing = recorder.endRecording();
-    if (cachedDrawing != null) {
-      cachedImage =
-          await cachedDrawing!.toImage(size.x.toInt(), size.y.toInt());
-    }
-  }
-
-  void _setupSpriteComponent() {
-    if (cachedImage == null) return;
-
-    final sprite = Sprite(cachedImage!);
-    spriteComponent = SpriteComponent(sprite: sprite, size: size);
-  }
-
-  void refreshImage() async {
-    recordDrawing();
-    _setupSpriteComponent();
   }
 
   void _drawPolygon(Canvas canvas) {

@@ -250,6 +250,7 @@ class SuiteWorld extends World with HasGameRef<SuiteGame> {
       positions: state.currentQuestionPositions[state.currentQuestionIndex],
       questionIndex: state.currentQuestionIndex,
       grid: questionGrid,
+      isDraggable: true,
     ));
     print(
         "polygons answers ${state.answerPositions[state.currentQuestionIndex]}");
@@ -259,6 +260,7 @@ class SuiteWorld extends World with HasGameRef<SuiteGame> {
       positions: state.answerPositions[state.currentQuestionIndex],
       questionIndex: state.currentQuestionIndex,
       grid: answerGrid,
+      isDraggable: false,
     ));
 
     print(

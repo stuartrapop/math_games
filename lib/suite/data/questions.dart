@@ -396,6 +396,66 @@ final question8 = QuestionData(
     V(12, 3)
   ],
 );
+final question9 = QuestionData(
+  objects: [
+    lShape.copyWith()..color = Colors.pinkAccent,
+    lShape.copyWith(flipHorizontal: true)..color = Colors.pinkAccent,
+    lShape.copyWith(flipVertical: true)..color = Colors.pinkAccent,
+    lShape.copyWith(flipVertical: true, flipHorizontal: true)
+      ..color = Colors.pinkAccent,
+    lShape.copyWith()..color = Colors.green,
+    lShape.copyWith(flipHorizontal: true)..color = Colors.green,
+    lShape.copyWith(flipVertical: true)..color = Colors.green,
+    lShape.copyWith(flipVertical: true, flipHorizontal: true)
+      ..color = Colors.green,
+    lShape.copyWith()..color = Colors.blue,
+    lShape.copyWith(flipHorizontal: true)..color = Colors.blue,
+    lShape.copyWith(flipVertical: true)..color = Colors.blue,
+    lShape.copyWith(flipVertical: true, flipHorizontal: true)
+      ..color = Colors.blue,
+    lShape.copyWith()..color = Colors.yellow,
+    lShape.copyWith(flipHorizontal: true)..color = Colors.yellow,
+    lShape.copyWith(flipVertical: true)..color = Colors.yellow,
+    lShape.copyWith(flipVertical: true, flipHorizontal: true)
+      ..color = Colors.yellow,
+  ],
+  questionPositions: [
+    V(2, 2),
+    V(5, 5),
+    V(10, 2),
+    V(8, 4),
+    V(9, 1),
+    V(3, 3),
+    V(8, 0),
+    V(10, 6),
+    V(6, 2),
+    V(4, 4),
+    V(9, 5),
+    V(6, 6),
+    V(11, 3),
+    V(7, 3),
+    V(5, 1),
+    V(4, 0)
+  ],
+  answerPositions: [
+    V(2, 2),
+    V(5, 5),
+    V(10, 2),
+    V(8, 4),
+    V(9, 1),
+    V(3, 3),
+    V(4, 0),
+    V(10, 6),
+    V(6, 2),
+    V(4, 4),
+    V(9, 5),
+    V(6, 6),
+    V(11, 3),
+    V(7, 3),
+    V(5, 1),
+    V(8, 0)
+  ],
+);
 
 List<QuestionData> questionData = [
   question1,
@@ -406,6 +466,7 @@ List<QuestionData> questionData = [
   question6,
   question7,
   question8,
+  question9,
 ];
 
 List<SnappablePolygon> getSnappablePolygonsFromQuestion({
@@ -413,13 +474,14 @@ List<SnappablePolygon> getSnappablePolygonsFromQuestion({
   required List<Vector2> positions,
   required int questionIndex,
   required GridComponent grid,
+  required bool isDraggable,
 }) {
   return questionData.objects.map((sp) {
     return sp.copyWith(
       questionIndex: questionIndex,
       polygonIndex: questionData.objects.indexOf(sp),
       upperLeftPosition: positions[questionData.objects.indexOf(sp)],
-      isDraggable: true,
+      isDraggable: isDraggable,
     )..grid = grid;
   }).toList();
 }

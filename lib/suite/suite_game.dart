@@ -17,7 +17,7 @@ class SuiteGame extends FlameGame
         DoubleTapDetector,
         TapDetector,
         HasGameRef,
-        // HasCollisionDetection,
+        HasCollisionDetection,
         LongPressDetector {
   static const description = '''
         Creation of set of stacked blocks where the number of blocks in each stack represent the number of digits in a number.

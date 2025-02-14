@@ -189,6 +189,7 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
+  final centerStarMenuController = StarMenuController();
   @override
   Widget build(BuildContext context) {
     double limitingSize = MediaQuery.of(context).size.width;
@@ -199,7 +200,6 @@ class _MenuPageState extends State<MenuPage> {
     }
 
     // entries for the dropdown menu
-    final centerStarMenuController = StarMenuController();
     final otherEntries = <Widget>[
       // MenuItem(
       //     context: context,
@@ -359,6 +359,12 @@ class _MenuPageState extends State<MenuPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    centerStarMenuController.dispose(); // 🔥 Dispose to avoid overlay issues
+    super.dispose();
   }
 }
 
