@@ -1,18 +1,14 @@
 import 'dart:math';
 
-import 'package:first_math/angle_measurement_game/angle_measurement_game.dart';
-import 'package:first_math/angle_measurement_game/angle_menu.dart';
-import 'package:first_math/angle_measurement_game/angle_slide_game.dart';
 import 'package:first_math/cerise_game/cerise_container.dart';
 import 'package:first_math/five_across/five_accross_game.dart';
+import 'package:first_math/geometric_suite/match_polygon/match_container.dart';
+import 'package:first_math/geometric_suite/suite/suite_container.dart';
 import 'package:first_math/geometry_game/geometry_game_container.dart';
 import 'package:first_math/match_game/match_game_container.dart';
 import 'package:first_math/memory_games/memory_game_container.dart';
 import 'package:first_math/multi-cuisenaire/cuisenaire_game.dart';
 import 'package:first_math/number_line_game/number_line_container.dart';
-import 'package:first_math/pulley_game/pulley_game_container.dart';
-import 'package:first_math/shape_match_game.dart/shape_match_game_container.dart';
-import 'package:first_math/suite/suite_container.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -92,20 +88,6 @@ class MyApp extends StatelessWidget {
                   GeometryGameContainer(returnHome: () => returnHome(context)));
         },
       ),
-      GoRoute(
-        path: '/angle',
-        builder: (context, state) => const AngleMenu(),
-        routes: [
-          GoRoute(
-            path: 'measurement',
-            builder: (context, state) => const AngleMeasurementGame(),
-          ),
-          GoRoute(
-            path: 'slide',
-            builder: (context, state) => const AngleSlideGame(),
-          ),
-        ],
-      ),
 
       GoRoute(
         path: '/five-accross-game',
@@ -124,7 +106,7 @@ class MyApp extends StatelessWidget {
       GoRoute(
         path: '/shape-match-game',
         builder: (context, state) {
-          return ShapeMatchGameContainer(returnHome: () => returnHome(context));
+          return MatchContainer(returnHome: () => returnHome(context));
         },
       ),
       GoRoute(
@@ -140,12 +122,7 @@ class MyApp extends StatelessWidget {
           return MemoryGameContainer(returnHome: () => returnHome(context));
         },
       ),
-      GoRoute(
-        path: '/pulley-game',
-        builder: (context, state) {
-          return PulleyGameContainer(returnHome: () => returnHome(context));
-        },
-      ),
+
       GoRoute(
         path: '/number-line-game',
         builder: (context, state) {
@@ -201,18 +178,6 @@ class _MenuPageState extends State<MenuPage> {
 
     // entries for the dropdown menu
     final otherEntries = <Widget>[
-      // MenuItem(
-      //     context: context,
-      //     route: '/geometry-game',
-      //     title: 'Géometrie',
-      //     color: Colors.red,
-      //     icon: Icons.hexagon_outlined),
-      // MenuItem(
-      //     context: context,
-      //     route: '/angle',
-      //     title: 'Angles',
-      //     color: Colors.red,
-      //     icon: Icons.text_rotation_angleup),
       MenuItem(
           key: const Key('shape-match'),
           context: context,
@@ -248,12 +213,6 @@ class _MenuPageState extends State<MenuPage> {
           title: 'Memory',
           color: Colors.pink,
           icon: Icons.compare_arrows),
-      // MenuItem(
-      //     context: context,
-      //     route: '/pulley-game',
-      //     title: 'Pulley',
-      //     color: const Color.fromARGB(255, 101, 30, 233),
-      //     icon: Icons.compare_arrows),
       MenuItem(
           key: const Key('number-line'),
           context: context,

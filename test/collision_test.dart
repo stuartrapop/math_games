@@ -1,6 +1,6 @@
 // Import the test package and Counter class
 
-import 'package:first_math/suite/utils/check_collision_polygon.dart';
+import 'package:first_math/geometric_suite/suite/utils/check_collision_polygon.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter_test/flutter_test.dart';
 
