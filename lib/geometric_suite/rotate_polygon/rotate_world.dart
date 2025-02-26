@@ -6,22 +6,23 @@ import 'package:first_math/geometric_suite/common/components/frame/grid_componen
 import 'package:first_math/geometric_suite/common/components/frame/next_button.dart';
 import 'package:first_math/geometric_suite/common/components/trophies.dart';
 import 'package:first_math/geometric_suite/common/utils/sprite_utils.dart';
-import 'package:first_math/geometric_suite/match_polygon/bloc/game_bloc.dart';
 import 'package:first_math/geometric_suite/match_polygon/components/interface_clickable_shape.dart';
-import 'package:first_math/geometric_suite/match_polygon/data/questions.dart';
-import 'package:first_math/geometric_suite/match_polygon/match_game.dart';
+import 'package:first_math/geometric_suite/rotate_polygon/bloc/game_bloc.dart';
+import 'package:first_math/geometric_suite/rotate_polygon/components/frame_circle.dart';
+import 'package:first_math/geometric_suite/rotate_polygon/data/questions.dart';
+import 'package:first_math/geometric_suite/rotate_polygon/rotate_game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 
-class MatchWorld extends World with HasGameRef<MatchGame> {
+class RotateWorld extends World with HasGameRef<RotateGame> {
   final Function returnHome;
   late final GameBloc gameBloc;
   late final GridComponent questionGrid;
   int targetPolygonIndices = -1;
   int activePolygonIndex = -1;
 
-  MatchWorld({required this.returnHome}) : super() {
+  RotateWorld({required this.returnHome}) : super() {
     questionGrid =
         GridComponent(gridSize: 35, rows: 16, cols: 20, lineWidth: 0.2)
           ..position = Vector2(150, 125);
@@ -40,7 +41,7 @@ class MatchWorld extends World with HasGameRef<MatchGame> {
     worldCenter = gameRef.size / 2;
 
     gameBloc = gameRef.gameBloc; // Get the Bloc from the game
-    print("Loading Suite World: ${gameBloc.state}");
+    print("Loading Rotate World: ${gameBloc.state}");
 
     double borderWidth = 30;
 
@@ -51,29 +52,9 @@ class MatchWorld extends World with HasGameRef<MatchGame> {
 
     void giveHint() async {
       print("Give Hint");
-
-      List<InterfaceClickableShape> components = questionGrid.children
-          .whereType<InterfaceClickableShape>()
-          .toList()
-          .where((e) => e.polygonIndex != -1)
-          .toList();
-      for (var component in components) {
-        component.resetColor();
-      }
-      List<InterfaceClickableShape> targetList = components
-          .where((element) => gameBloc
-              .state
-              .questionList[gameBloc.state.currentQuestionIndex]
-              .targetPolygonIndices
-              .contains(element.polygonIndex))
-          .toList();
-
-      for (var target in targetList) {
-        await target.demoClick();
-      }
     }
 
-    final frame = Frame<MatchGame>(
+    final frame = Frame<RotateGame>(
       borderWidth: borderWidth,
       returnHome: overrideReturnHome,
       giveHint: giveHint,
@@ -87,32 +68,7 @@ class MatchWorld extends World with HasGameRef<MatchGame> {
         }
       },
       validate: () {
-        for (final child in children.toList()) {
-          if (child is AnimatedSprite) {
-            remove(child);
-          }
-        }
-        List<InterfaceClickableShape> components = questionGrid.children
-            .whereType<InterfaceClickableShape>()
-            .toList()
-            .where((e) => e.polygonIndex != -1)
-            .toList();
-        print("components $components");
-        print("question index ${gameBloc.state.currentQuestionIndex}");
-        List<int> targetIndices =
-            questionData[gameBloc.state.currentQuestionIndex]
-                .targetPolygonIndices;
-
-// Condition 1: All components in `targetPolygonIndices` must be `isTapped == true`
-        bool allTargetsTapped = components
-            .where((e) => targetIndices.contains(e.polygonIndex))
-            .every((e) => e.isTapped);
-
-// Condition 2: All other components must be `isTapped == false`
-        bool allOthersNotTapped = components
-            .where((e) => !targetIndices.contains(e.polygonIndex))
-            .every((e) => !e.isTapped);
-        bool isSolution = allTargetsTapped && allOthersNotTapped;
+        bool isSolution = true;
         if (isSolution) {
           AnimatedSprite hearts =
               AnimatedSprite(spriteName: SpriteName.blueCoin)
@@ -154,6 +110,7 @@ class MatchWorld extends World with HasGameRef<MatchGame> {
       ..anchor = Anchor.topLeft;
     add(frame);
     add(questionGrid);
+
     updateQuestion(gameBloc.state);
     int? lastQuestionIndex;
     gameBloc.stream.listen((state) async {
@@ -215,10 +172,15 @@ class MatchWorld extends World with HasGameRef<MatchGame> {
       questionData: question,
       updateActivePolygonIndex: updateActivePolygonIndex,
     );
-    targetPolygonIndices = question.targetPolygonIndices[0];
 
     questionGrid.add(questionPolygons.target);
-    questionGrid.addAll(questionPolygons.allPolygons);
+    InterfaceClickableShape questionShape = questionPolygons.allPolygons[0];
+
+    FrameCircle frameCircle =
+        FrameCircle(radius: 200, questionShape: questionShape)
+          ..position = Vector2(150, 100);
+
+    questionGrid.add(frameCircle);
   }
 
   bool allTrue(List<bool> list) {

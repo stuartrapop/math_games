@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:first_math/geometric_suite/common/components/frame/grid_component.dart';
+import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
 import 'package:flame/components.dart';
 import 'package:polybool/polybool.dart';
@@ -48,7 +49,7 @@ double _calculatePolygonArea(List<Coordinate> vertices) {
 /// ✅ **Optimized: Process only affected grid cells!**
 List<List<CellColorClass>> processGridCells({
   required GridComponent grid,
-  required List<SnappablePolygon> polygons,
+  required List<InterfaceSnappableShape> polygons,
   required List<Vector2> positions,
 }) {
   // ✅ Step 1: Initialize blank grid
@@ -60,7 +61,7 @@ List<List<CellColorClass>> processGridCells({
   // ✅ Step 2: Process each polygon
 
   for (int i = 0; i < polygons.length; i++) {
-    SnappablePolygon polygon = polygons[i];
+    InterfaceSnappableShape polygon = polygons[i];
     Vector2 position = positions[i];
     // print("🔍 Processing Polygon $i at $position");
     double width = polygon.size.x / grid.gridSize;
@@ -92,7 +93,8 @@ List<List<CellColorClass>> processGridCells({
         ];
 
         // 🔹 Get polygon in grid space
-        List<Coordinate> polygonVertices = polygon.adjustedVertices.map((v) {
+        List<Coordinate> polygonVertices =
+            (polygon as SnappablePolygon).adjustedVertices.map((v) {
           return Coordinate(v.x + position.x, v.y + position.y);
         }).toList();
 
@@ -121,7 +123,7 @@ List<List<CellColorClass>> processGridCells({
 /// ✅ **Compare Two Processed Grids (Top & Bottom)**
 bool compareGrids({
   required GridComponent grid,
-  required List<SnappablePolygon> questions,
+  required List<InterfaceSnappableShape> questions,
   required List<Vector2> questionPositions,
   required List<Vector2> answerPositions,
   double tolerance = 0.01, // Allow 1% difference

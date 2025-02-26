@@ -1,4 +1,6 @@
 import 'package:first_math/geometric_suite/common/components/frame/grid_component.dart';
+import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
+import 'package:first_math/geometric_suite/suite/components/snappable_circle.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
 import 'package:first_math/geometric_suite/suite/data/questions.dart';
 
@@ -9,14 +11,7 @@ GridComponent tempGrid = GridComponent(
   lineWidth: 2,
 )..position = V(250, 100);
 
-// GridComponent questionGrid = GridComponent(
-//   gridSize: 35,
-//   rows: 8,
-//   cols: 14,
-//   lineWidth: 2,
-// )..position = V(250, 400);
-
-SnappablePolygon square = SnappablePolygon(
+InterfaceSnappableShape square = SnappablePolygon(
   vertices: [
     V(0, 0), // Top-left (snap reference)
     V(1, 0),
@@ -26,7 +21,7 @@ SnappablePolygon square = SnappablePolygon(
   grid: tempGrid,
 );
 
-SnappablePolygon octogon = SnappablePolygon(
+InterfaceSnappableShape octogon = SnappablePolygon(
   vertices: [
     V(1, 0),
     V(2, 0),
@@ -39,7 +34,17 @@ SnappablePolygon octogon = SnappablePolygon(
   ],
   grid: tempGrid,
 );
-SnappablePolygon hexagon = SnappablePolygon(
+InterfaceSnappableShape pentagon = SnappablePolygon(
+  vertices: [
+    V(2, 0.5),
+    V(4, 2),
+    V(3, 4),
+    V(1, 4),
+    V(0, 2),
+  ],
+  grid: tempGrid,
+);
+InterfaceSnappableShape hexagon = SnappablePolygon(
   vertices: [
     V(1, 0),
     V(2, 0),
@@ -50,7 +55,7 @@ SnappablePolygon hexagon = SnappablePolygon(
   ],
   grid: tempGrid,
 );
-SnappablePolygon polygon5 = SnappablePolygon(
+InterfaceSnappableShape polygon5 = SnappablePolygon(
   vertices: [
     V(1, 0),
     V(2, 0),
@@ -62,7 +67,7 @@ SnappablePolygon polygon5 = SnappablePolygon(
   grid: tempGrid,
 );
 
-SnappablePolygon triangle = SnappablePolygon(
+InterfaceSnappableShape triangle = SnappablePolygon(
   // Initial top-left position
   vertices: [
     V(0, 1), // Top-left (snap reference)
@@ -71,7 +76,7 @@ SnappablePolygon triangle = SnappablePolygon(
   ],
   grid: tempGrid,
 );
-SnappablePolygon yellowParralelogram = SnappablePolygon(
+InterfaceSnappableShape yellowParralelogram = SnappablePolygon(
   vertices: [
     V(1, 0), // Top-left (snap reference)
     V(4, 0),
@@ -80,7 +85,7 @@ SnappablePolygon yellowParralelogram = SnappablePolygon(
   ],
   grid: tempGrid,
 );
-SnappablePolygon lShape = SnappablePolygon(
+InterfaceSnappableShape lShape = SnappablePolygon(
   vertices: [
     V(0, 0), // Top-left (snap reference)
     V(3, 0),
@@ -91,8 +96,11 @@ SnappablePolygon lShape = SnappablePolygon(
   ],
   grid: tempGrid,
 );
+InterfaceSnappableShape circle = SnappableCircle(
+  grid: tempGrid,
+);
 
-SnappablePolygon polygonWithHole = SnappablePolygon(
+InterfaceSnappableShape polygonWithHole = SnappablePolygon(
   vertices: [V(0, 0), V(20, 0), V(20, 20), V(0, 20)],
   innerVertices: [V(5, 5), V(15, 5), V(15, 15), V(5, 15)],
   grid: tempGrid,

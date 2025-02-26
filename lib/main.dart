@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:first_math/cerise_game/cerise_container.dart';
 import 'package:first_math/five_across/five_accross_game.dart';
 import 'package:first_math/geometric_suite/match_polygon/match_container.dart';
+import 'package:first_math/geometric_suite/rotate_polygon/rotate_container.dart';
 import 'package:first_math/geometric_suite/suite/suite_container.dart';
 import 'package:first_math/geometry_game/geometry_game_container.dart';
 import 'package:first_math/match_game/match_game_container.dart';
@@ -141,6 +142,12 @@ class MyApp extends StatelessWidget {
           return SuiteContainer(returnHome: () => returnHome(context));
         },
       ),
+      GoRoute(
+        path: '/rotate-game',
+        builder: (context, state) {
+          return RotateContainer(returnHome: () => returnHome(context));
+        },
+      ),
     ],
   );
 }
@@ -232,6 +239,13 @@ class _MenuPageState extends State<MenuPage> {
           context: context,
           route: '/suite-game',
           title: 'Suite Game',
+          color: const Color.fromARGB(255, 101, 30, 233),
+          icon: Icons.compare_arrows),
+      MenuItem(
+          key: const Key('rotate-game'),
+          context: context,
+          route: '/rotate-game',
+          title: 'Rotate Game',
           color: const Color.fromARGB(255, 101, 30, 233),
           icon: Icons.compare_arrows),
     ];

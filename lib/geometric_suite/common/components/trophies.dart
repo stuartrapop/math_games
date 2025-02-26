@@ -1,9 +1,10 @@
-import 'package:first_math/geometric_suite/suite/suite_game.dart';
+import 'package:first_math/geometric_suite/common/types/AbstractFlameGameClass.dart';
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 
-class TrophyComponent extends PositionComponent with HasGameRef<SuiteGame> {
+class TrophyComponent extends PositionComponent
+    with HasGameRef<GameWithFrameFeatures> {
   late Sprite trophySprite;
   final double trophySize;
   final List<String> spriteNames = [

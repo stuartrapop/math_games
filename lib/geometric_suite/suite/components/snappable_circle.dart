@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:first_math/geometric_suite/common/components/BasePolygon.dart';
 import 'package:first_math/geometric_suite/common/components/frame/grid_component.dart';
 import 'package:first_math/geometric_suite/suite/bloc/suite_bloc.dart';
 import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
@@ -12,135 +11,139 @@ import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
-class SnappablePolygon extends BasePolygon
-    with HasGameRef<SuiteGame>
+class SnappableCircle extends CircleComponent
+    with HasGameRef<SuiteGame>, DragCallbacks
     implements InterfaceSnappableShape {
-  @override
-  double radius = 1.0;
-  @override
-  GridComponent grid;
-  int questionIndex;
-  bool isDraggable;
+  final bool isDraggable;
   Vector2? lastValidPosition;
+  @override
+  double scaleWidth = 1.0;
 
+  @override
+  double scaleHeight = 1.0;
+
+  @override
+  double rotation = 0.0;
+
+  @override
+  bool flipVertical = false;
+
+  @override
+  bool flipHorizontal = false;
   @override
   int polygonIndex;
   @override
   Function? updateActivePolygonIndex;
 
-  SnappablePolygon({
-    required super.vertices,
-    required this.grid,
+  double pixelToUnitRatio;
+  Vector2? upperLeftPosition;
+
+  late final Paint borderPaint;
+  Color color;
+
+  GridComponent _grid; // ✅ Use a private variable
+
+  @override
+  GridComponent get grid => _grid; // ✅ Getter returns the private variable
+
+  @override
+  set grid(GridComponent value) {
+    _grid = value; // ✅ Set the private variable, avoiding infinite recursion
+  }
+
+  int questionIndex;
+  SnappableCircle({
+    required GridComponent grid,
     this.isDraggable = true,
     this.questionIndex = -1,
     this.polygonIndex = -1,
-    super.innerVertices,
-    super.flipHorizontal,
-    super.flipVertical,
-    super.upperLeftPosition, //
-  }) : super(
-          pixelToUnitRatio: grid.gridSize.toDouble(),
-        );
+    this.pixelToUnitRatio = 50,
+    this.upperLeftPosition,
+    this.color = Colors.white,
+    Color borderColor = Colors.white54,
+    double borderWidth = 4,
+    double radius = 2,
+  })  : _grid = grid,
+        super(
+          radius: radius * grid.gridSize.toDouble(),
+        ) {
+    borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderWidth;
+  }
 
   @override
-  SnappablePolygon copyWith({
-    List<Vector2>? vertices,
-    List<Vector2>? innerVertices,
+  SnappableCircle copyWith({
+    Vector2? upperLeftPosition,
+    Function? updateActivePolygonIndex,
+    double? pixelToUnitRatio,
     Color? color,
-    GridComponent? grid,
-    double? scaleWidth,
-    double? scaleHeight,
-    bool? isDraggable,
-    double? rotation,
+    double? radius,
+    Color? borderColor,
+    double? borderWidth,
+    bool? flipVertical,
+    bool? flipHorizontal,
     int? questionIndex,
     int? polygonIndex,
-    Vector2? position,
-    Vector2? size,
-    bool? flipHorizontal,
-    bool? flipVertical,
-    Vector2? upperLeftPosition,
-    double? pixelToUnitRatio,
-    double? borderWidth,
-    Function? updateActivePolygonIndex,
+    bool? isDraggable,
+    GridComponent? grid,
   }) {
-    // ✅ Ensure we have a valid grid reference
-    double newPixelToUnitRatio =
-        pixelToUnitRatio ?? grid?.gridSize.toDouble() ?? this.pixelToUnitRatio;
+    final double newPixelToUnitRatio =
+        pixelToUnitRatio ?? this.pixelToUnitRatio;
 
-    // ✅ Update the position using the new grid size
-    Vector2 newUpperLeftPosition =
+    final Vector2 newUpperLeftPosition =
         upperLeftPosition ?? this.upperLeftPosition ?? Vector2.zero();
-    Vector2 updatedPosition = newUpperLeftPosition * newPixelToUnitRatio;
-    SnappablePolygon copiedPolygon = SnappablePolygon(
-      vertices: vertices ?? this.vertices.map((v) => v.clone()).toList(),
-      innerVertices:
-          innerVertices ?? this.innerVertices.map((v) => v.clone()).toList(),
+
+    final Vector2 updatedPosition = newUpperLeftPosition * newPixelToUnitRatio;
+
+    SnappableCircle circle = SnappableCircle(
       grid: grid ?? this.grid,
-      questionIndex: questionIndex ?? this.questionIndex,
       polygonIndex: polygonIndex ?? this.polygonIndex,
-      flipHorizontal: flipHorizontal ?? this.flipHorizontal,
-      flipVertical: flipVertical ?? this.flipVertical,
+      questionIndex: questionIndex ?? this.questionIndex,
+      color: color ?? this.color, // ✅ Correctly update color
+      borderColor: borderColor ?? borderPaint.color,
+      borderWidth: borderWidth ?? borderPaint.strokeWidth,
+      radius: radius ?? this.radius,
+      pixelToUnitRatio: newPixelToUnitRatio,
       upperLeftPosition: newUpperLeftPosition,
       isDraggable: isDraggable ?? this.isDraggable,
-    )
-      ..position = updatedPosition
-      ..color = color ?? this.color
-      ..scaleHeight = scaleHeight ?? this.scaleHeight
-      ..scaleWidth = scaleWidth ?? this.scaleWidth
-      ..rotation = rotation ?? this.rotation
-      ..pixelToUnitRatio = newPixelToUnitRatio;
+    )..position = updatedPosition;
 
-    copiedPolygon.initializeAdjustedVertices();
+    // ✅ Set the correct paint color after creation
+    circle.paint.color = color ?? this.color;
 
-    return copiedPolygon;
+    return circle;
   }
 
   @override
   Future<void> onLoad() async {
-    super.onLoad();
-    debugMode = false;
     position = (upperLeftPosition ?? Vector2.zero()) * grid.gridSize.toDouble();
-  }
-
-  List<double> convertVector2ToDoubles(List<Vector2> vectors) {
-    return vectors.expand((v) => [v.x, v.y]).toList();
-  }
-
-  Future<void> demoClick() async {
-    print("Demo Click");
-  }
-
-  void toggleColor() {
-    print("Toggle Color");
-  }
-
-  void resetColor() {
-    print("Reset Color");
+    debugMode = false;
+    paint.color = color;
+    return super.onLoad();
   }
 
   Future<void> demoMoveTo({required Vector2 gridPoint}) async {
     GridComponent answerGrid = gameRef.suiteWorld.answerGrid;
 
-    // Find the corresponding polygon in the answer grid
-    SnappablePolygon correspondingPolygon =
-        answerGrid.children.whereType<SnappablePolygon>().toList().firstWhere(
-              (element) =>
-                  element.questionIndex == questionIndex &&
-                  element.polygonIndex == polygonIndex,
+    SnappableCircle correspondingCircle =
+        answerGrid.children.whereType<SnappableCircle>().toList().firstWhere(
+              (element) => element.polygonIndex == polygonIndex,
               orElse: () => this,
             );
+
     print(
-        "gridPoint: $gridPoint, ccurrent position: ${position / grid.gridSize.toDouble()}");
+        "gridPoint: $gridPoint, current position: ${position / grid.gridSize.toDouble()}");
     if (gridPoint == (position / grid.gridSize.toDouble())) {
       return;
     }
 
-    correspondingPolygon.blink(); // 🔥 Highlight before moving
+    correspondingCircle.blink();
 
     Vector2 currentGridPosition = position / grid.gridSize.toDouble();
     print("Current Grid Position: $currentGridPosition, Target: $gridPoint");
 
-    // Calculate movement offset
     Vector2 movementOffset =
         (gridPoint - currentGridPosition) * grid.gridSize.toDouble();
     double duration = (100 + movementOffset.length) / (5.0 * grid.gridSize);
@@ -163,7 +166,7 @@ class SnappablePolygon extends BasePolygon
         ),
       ],
       onComplete: () {
-        priority = 1; // ✅ Reset priority after movement completes
+        priority = 1;
         completer.complete();
       },
     );
@@ -178,17 +181,6 @@ class SnappablePolygon extends BasePolygon
   void blink() {
     priority = 10;
     const scale = 0.2;
-
-    final moveEffect = SequenceEffect(
-      [
-        MoveEffect.by(
-          Vector2(-topLeft.x, -topLeft.y) * scale,
-          EffectController(duration: 0.3, alternate: true, repeatCount: 5),
-        ),
-      ],
-    );
-
-    add(moveEffect);
 
     final scaleEffect = SequenceEffect(
       [
@@ -219,7 +211,9 @@ class SnappablePolygon extends BasePolygon
     final Vector2 newPosition = position + event.delta;
     position = newPosition;
     position = clampToGrid(
-      position: newPosition, grid: grid, polygonWidth: size.x, // ✅ Add width
+      position: newPosition,
+      grid: grid,
+      polygonWidth: size.x,
       polygonHeight: size.y,
     );
   }
@@ -231,6 +225,7 @@ class SnappablePolygon extends BasePolygon
     final Vector2 snappedPosition =
         getClosestGridPoint(position: position, grid: grid);
     position = snappedPosition;
+    print("Snapped Position: $snappedPosition");
 
     bool hasOverlap = false;
     for (var component in grid.children) {
@@ -252,5 +247,11 @@ class SnappablePolygon extends BasePolygon
     ));
 
     super.onDragEnd(event);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    canvas.drawCircle(Offset(radius, radius), radius, borderPaint);
   }
 }

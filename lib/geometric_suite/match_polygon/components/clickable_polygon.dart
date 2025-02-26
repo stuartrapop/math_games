@@ -1,19 +1,24 @@
 import 'package:first_math/geometric_suite/common/components/BasePolygon.dart';
-import 'package:first_math/geometric_suite/match_polygon/data/questions.dart';
-import 'package:first_math/geometric_suite/match_polygon/match_game.dart';
+import 'package:first_math/geometric_suite/common/types/AbstractFlameGameClass.dart';
+import 'package:first_math/geometric_suite/match_polygon/components/interface_clickable_shape.dart';
+import 'package:first_math/geometric_suite/match_polygon/utils/simulate_click.dart';
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
+import 'package:geobase/geobase.dart';
 
-class ClickablePolygon extends BasePolygon with HasGameRef<MatchGame> {
+class ClickablePolygon extends BasePolygon
+    with HasGameRef<GameWithFrameFeatures>
+    implements InterfaceClickableShape {
+  @override
   int polygonIndex;
+  @override
   Function? updateActivePolygonIndex;
   ClickablePolygon({
     required super.vertices,
     this.updateActivePolygonIndex,
     double pixelToUnitRatio = 50,
-    double borderWidth = 1.0,
+    super.borderWidth = 1.0,
     super.innerVertices,
     super.flipHorizontal,
     super.flipVertical,
@@ -26,7 +31,6 @@ class ClickablePolygon extends BasePolygon with HasGameRef<MatchGame> {
   }) : super(
           upperLeftPosition: upperLeftPosition,
           pixelToUnitRatio: pixelToUnitRatio,
-          borderWidth: borderWidth,
         ) {
     position = (upperLeftPosition ?? Vector2.zero()) * pixelToUnitRatio;
   }
@@ -49,15 +53,14 @@ class ClickablePolygon extends BasePolygon with HasGameRef<MatchGame> {
     Function? updateActivePolygonIndex,
   }) {
     // ✅ Ensure updated ratio is applied before computations
-    final double newPixelToUnitRatio =
-        pixelToUnitRatio ?? this.pixelToUnitRatio;
 
     // ✅ Ensure upperLeftPosition is correctly updated
     final Vector2 newUpperLeftPosition =
         upperLeftPosition ?? this.upperLeftPosition ?? Vector2.zero();
 
     // ✅ Compute new position
-    final Vector2 updatedPosition = newUpperLeftPosition * newPixelToUnitRatio;
+    final Vector2 updatedPosition =
+        newUpperLeftPosition * (pixelToUnitRatio ?? this.pixelToUnitRatio);
 
     ClickablePolygon copiedPolygon = ClickablePolygon(
       updateActivePolygonIndex:
@@ -65,7 +68,7 @@ class ClickablePolygon extends BasePolygon with HasGameRef<MatchGame> {
       vertices: vertices ?? this.vertices.map((v) => v.clone()).toList(),
       innerVertices:
           innerVertices ?? this.innerVertices.map((v) => v.clone()).toList(),
-      pixelToUnitRatio: newPixelToUnitRatio, // ✅ Apply new ratio
+      pixelToUnitRatio: pixelToUnitRatio ?? this.pixelToUnitRatio,
       upperLeftPosition: newUpperLeftPosition,
       flipHorizontal: flipHorizontal ?? this.flipHorizontal,
       flipVertical: flipVertical ?? this.flipVertical,
@@ -91,80 +94,51 @@ class ClickablePolygon extends BasePolygon with HasGameRef<MatchGame> {
     return super.onLoad();
   }
 
-  void updatePaints() {
-    fillPaint.color = color;
-    outerPaint.shader = LinearGradient(
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-      stops: [0, 1],
-      colors: [Color.alphaBlend(color.withOpacity(0.8), Colors.white), color],
-    ).createShader(polygonPath.getBounds());
+  @override
+  void onMount() {
+    if (polygonIndex != -1) resetColor();
+
+    super.onMount();
   }
 
+  void updatePaints() {
+    fillPaint.color = isTapped ? color : Colors.transparent;
+  }
+
+  @override
   void resetColor() {
     isTapped = false;
-    color = Colors.transparent;
     updatePaints();
   }
 
-  void demoClick({required Vector2 labelPosition}) async {
-    final hand = SpriteComponent(
-      sprite: await gameRef.loadSprite('hand100.png'),
-      size: Vector2.all(50),
-      position: (labelPosition - Vector2(2, 2)) * pixelToUnitRatio,
-      anchor: Anchor.center,
-    );
-
-// 🔹 Define movement effect (e.g., move slightly down and back)
-    final moveEffect = MoveEffect.by(
-      Vector2(2, 2) * pixelToUnitRatio,
-      EffectController(duration: 1),
-    );
-
-    final blinkEffect = SequenceEffect([
-      OpacityEffect.to(0, EffectController(duration: 0.2)),
-      OpacityEffect.to(1, EffectController(duration: 0.2)),
-      OpacityEffect.to(0, EffectController(duration: 0.2)),
-      OpacityEffect.to(1, EffectController(duration: 0.2)),
-    ]);
-
-    // 🔹 Wait 2 seconds before removing
-    final removeAfterDelay = TimerComponent(
-      period: 1,
-      repeat: false,
-      onTick: () => hand.removeFromParent(),
-    );
-
-    // 🔥 Chain Effects
-    final sequence = SequenceEffect([
-      moveEffect,
-      blinkEffect // Move first
-    ], onComplete: () {
-      hand.add(removeAfterDelay);
-      // After effects complete, start the timer to remove the hand
-    });
-
-    hand.add(sequence);
-    add(hand);
-    isTapped = false;
-    Future.delayed(Duration(seconds: 1), () {
-      toggleColor();
-      Future.delayed(Duration(milliseconds: 200), () {
-        toggleColor();
-        Future.delayed(Duration(milliseconds: 200), () {
-          toggleColor();
-          Future.delayed(Duration(milliseconds: 200), () {
-            toggleColor();
-          });
-        });
-      });
-    });
+  List<double> convertVector2ToDoubles(List<Vector2> vectors) {
+    return vectors.expand((v) => [v.x, v.y]).toList();
   }
 
+  @override
+  Future<void> demoClick() async {
+    List<Vector2> points = adjustedVertices;
+    Polygon componentPolygon = Polygon.build([convertVector2ToDoubles(points)]);
+    Vector2 labelPosition = Vector2(componentPolygon.polylabel2D().position.x,
+        componentPolygon.polylabel2D().position.y);
+    resetColor();
+    await simulateClick(
+      labelPosition: labelPosition,
+      pixelToUnitRatio: pixelToUnitRatio,
+      gameRef: gameRef,
+      currentComponent: this,
+    );
+  }
+
+  @override
   void toggleColor() {
     isTapped = !isTapped;
-    color = isTapped ? question1.target.color : Colors.transparent;
     updatePaints();
+  }
+
+  @override
+  String toString() {
+    return "ClickablePolygon: polygonIndex: $polygonIndex, isTapped: $isTapped";
   }
 
   @override

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:first_math/geometric_suite/match_polygon/data/questions.dart';
+import 'package:first_math/geometric_suite/rotate_polygon/data/questions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

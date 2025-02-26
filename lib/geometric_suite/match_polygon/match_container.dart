@@ -1,4 +1,5 @@
 import 'package:first_math/geometric_suite/match_polygon/bloc/game_bloc.dart';
+import 'package:first_math/geometric_suite/match_polygon/data/questions.dart';
 import 'package:first_math/geometric_suite/match_polygon/match_game.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,7 @@ class _MatchContainerState extends State<MatchContainer> {
   @override
   void initState() {
     super.initState();
-    matchBloc = GameBloc(questions: []);
+    matchBloc = GameBloc(questions: questionData);
     suiteGame = MatchGame(
       returnHome: widget.returnHome,
       gameBloc: matchBloc, // ✅ Use a single instance

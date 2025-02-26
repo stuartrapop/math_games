@@ -7,7 +7,7 @@ import 'package:first_math/geometric_suite/common/components/frame/next_button.d
 import 'package:first_math/geometric_suite/common/components/trophies.dart';
 import 'package:first_math/geometric_suite/common/utils/sprite_utils.dart';
 import 'package:first_math/geometric_suite/suite/bloc/suite_bloc.dart';
-import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
+import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
 import 'package:first_math/geometric_suite/suite/data/questions.dart';
 import 'package:first_math/geometric_suite/suite/suite_game.dart';
 import 'package:first_math/geometric_suite/suite/utils/check_collision_polygon.dart';
@@ -55,17 +55,17 @@ class SuiteWorld extends World with HasGameRef<SuiteGame> {
       print("Give Hint");
       bool moveShown = false;
 
-      final List<SnappablePolygon> components =
-          questionGrid.children.whereType<SnappablePolygon>().toList();
+      final List<InterfaceSnappableShape> components =
+          questionGrid.children.whereType<InterfaceSnappableShape>().toList();
       for (var component in components) {
         Vector2 testGridPoint = suiteBloc
                 .state.answerPositions[suiteBloc.state.currentQuestionIndex]
             [component.polygonIndex];
         print("Test Grid Point:  $testGridPoint");
         print("Component Upper Left Position:  ${component.upperLeftPosition}");
-        final List<SnappablePolygon> polygonList =
-            questionGrid.children.whereType<SnappablePolygon>().toList();
-        SnappablePolygon testPolygon =
+        final List<InterfaceSnappableShape> polygonList =
+            questionGrid.children.whereType<InterfaceSnappableShape>().toList();
+        InterfaceSnappableShape testPolygon =
             component.copyWith(upperLeftPosition: testGridPoint);
         bool canMove = true;
         print("Checking Overlap");
@@ -114,7 +114,7 @@ class SuiteWorld extends World with HasGameRef<SuiteGame> {
           }
         }
         final allPolygons =
-            questionGrid.children.whereType<SnappablePolygon>().toList();
+            questionGrid.children.whereType<InterfaceSnappableShape>().toList();
         print(
             "state ${suiteBloc.state.currentQuestionPositions[suiteBloc.state.currentQuestionIndex]}");
         print(
@@ -228,9 +228,9 @@ class SuiteWorld extends World with HasGameRef<SuiteGame> {
     print("🗑 Removing existing polygons...");
 
     final questionPolygons =
-        questionGrid.children.whereType<SnappablePolygon>().toList();
+        questionGrid.children.whereType<InterfaceSnappableShape>().toList();
     final answerPolygons =
-        answerGrid.children.whereType<SnappablePolygon>().toList();
+        answerGrid.children.whereType<InterfaceSnappableShape>().toList();
 
     for (final poly in questionPolygons) {
       questionGrid.remove(poly);
@@ -252,12 +252,13 @@ class SuiteWorld extends World with HasGameRef<SuiteGame> {
     removePolygons();
     // await Future.delayed(const Duration(milliseconds: 10));
     print(
-        "🔍 Before Adding: Question Grid has ${questionGrid.children.whereType<SnappablePolygon>().length} polygons");
+        "🔍 Before Adding: Question Grid has ${questionGrid.children.whereType<InterfaceSnappableShape>().length} polygons");
     print(
-        "🔍 Before Adding: Answer Grid has ${answerGrid.children.whereType<SnappablePolygon>().length} polygons");
+        "🔍 Before Adding: Answer Grid has ${answerGrid.children.whereType<InterfaceSnappableShape>().length} polygons");
     print(
         "polygons questions [${formatVectorList(state.currentQuestionPositions[state.currentQuestionIndex])}]");
-    List<SnappablePolygon> questionList = getSnappablePolygonsFromQuestion(
+    List<InterfaceSnappableShape> questionList =
+        getSnappablePolygonsFromQuestion(
       questionData: questionData[state.currentQuestionIndex],
       positions: state.currentQuestionPositions[state.currentQuestionIndex],
       questionIndex: state.currentQuestionIndex,
@@ -279,9 +280,9 @@ class SuiteWorld extends World with HasGameRef<SuiteGame> {
       ));
     });
     print(
-        "🔍 After Adding: Question Grid has ${questionGrid.children.whereType<SnappablePolygon>().length} polygons");
+        "🔍 After Adding: Question Grid has ${questionGrid.children.whereType<InterfaceSnappableShape>().length} polygons");
     print(
-        "🔍 After Adding: Answer Grid has ${answerGrid.children.whereType<SnappablePolygon>().length} polygons");
+        "🔍 After Adding: Answer Grid has ${answerGrid.children.whereType<InterfaceSnappableShape>().length} polygons");
   }
 
   void gameReset() {

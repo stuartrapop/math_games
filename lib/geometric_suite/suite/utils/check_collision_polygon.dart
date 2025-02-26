@@ -1,213 +1,84 @@
 import 'dart:math';
 
 import 'package:dart_earcut/dart_earcut.dart';
+import 'package:first_math/geometric_suite/common/utils/helpers.dart';
+import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
+import 'package:first_math/geometric_suite/suite/components/snappable_circle.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
 import 'package:flame/components.dart';
 
-bool isConvexPolygon(List<Vector2> vertices) {
-  if (vertices.length < 3) return false; // Not a valid polygon
-
-  int sign = 0; // Track cross product sign consistency
-
-  for (int i = 0; i < vertices.length; i++) {
-    Vector2 v1 = vertices[i];
-    Vector2 v2 = vertices[(i + 1) % vertices.length];
-    Vector2 v3 = vertices[(i + 2) % vertices.length];
-
-    // Compute edge vectors
-    Vector2 edge1 = v2 - v1;
-    Vector2 edge2 = v3 - v2;
-
-    // Compute cross product: (edge1.x * edge2.y - edge1.y * edge2.x)
-    double crossProduct = edge1.x * edge2.y - edge1.y * edge2.x;
-
-    // Determine sign of the cross product
-    if (crossProduct != 0) {
-      int currentSign = (crossProduct > 0) ? 1 : -1;
-
-      // If it's the first nonzero cross product, set the reference sign
-      if (sign == 0) {
-        sign = currentSign;
-      } else if (sign != currentSign) {
-        // If the sign changes, it's concave
-        return false;
-      }
-    }
-  }
-
-  return true; // No sign change, so it's convex
-}
-
-/// **Compute the minimum penetration depth between two polygons**
-double findMinSeparation(List<Vector2> a, List<Vector2> b) {
-  double minSeparation = double.infinity;
-
-  // print('\n🔍 Checking separation between polygons:');
-  // print('➡️ Polygon A: ${a}');
-  // print('➡️ Polygon B: ${b}');
-
-  Vector2 getPerpendicular(Vector2 vector) {
-    return Vector2(-vector.y, vector.x);
-  }
-
-  /// **Computes the magnitude (length) of a vector**
-  double getMagnitude(Vector2 vector) {
-    return sqrt(vector.x * vector.x + vector.y * vector.y);
-  }
-
-  /// **Returns a normalized version of a vector**
-  Vector2 normalize(Vector2 vector) {
-    double mag = getMagnitude(vector);
-    return mag == 0 ? Vector2.zero() : Vector2(vector.x / mag, vector.y / mag);
-  }
-
-  for (int i = 0; i < a.length; i++) {
-    Vector2 v1 = a[i];
-    Vector2 v2 = a[(i + 1) % a.length];
-
-    Vector2 edge = v2 - v1;
-    Vector2 normal = normalize(getPerpendicular(edge));
-
-    // print('\n🔹 Checking edge: $v1 -> $v2');
-    // print('   📏 Edge vector: $edge');
-    // print('   📏 Perpendicular axis (Normal): $normal');
-
-    var (minA, maxA) = projectPolygon(a, normal);
-    var (minB, maxB) = projectPolygon(b, normal);
-
-    // print('   🟢 Projection of A on axis: [$minA, $maxA]');
-    // print('   🔵 Projection of B on axis: [$minB, $maxB]');
-
-    // Compute actual overlap
-    double overlap = min(maxA, maxB) - max(minA, minB);
-
-    if (overlap <= 0) {
-      // print('   🚫 Separation found on this axis - NO COLLISION');
-      return overlap; // If there is no overlap, polygons are separated
-    }
-
-    minSeparation = min(minSeparation, overlap);
-    // print('   ✅ Overlap on this axis - CONTINUE CHECKING (Overlap: $overlap)');
-  }
-
-  // print('✔️ No separating axis found - Polygons are colliding');
-  return minSeparation;
-}
-
-/// **Project a polygon onto an axis**
-(double, double) projectPolygon(List<Vector2> poly, Vector2 axis) {
-  double min = poly.first.dot(axis);
-  double max = min;
-
-  for (var vertex in poly.skip(1)) {
-    double projection = vertex.dot(axis);
-    min = projection < min ? projection : min;
-    max = projection > max ? projection : max;
-  }
-
-  return (min, max);
-}
-
-/// **Check if two polygons are colliding**
-bool isCollidingPolygonPolygon(List<Vector2> a, List<Vector2> b) {
-  // print("🔴 Checking collision between two polygons:");
-  // print("a: ${a.map((v) => v).toList()};");
-  // print("b: ${b.map((v) => v).toList()}");
-  const double epsilon = 1e-6;
-  double sep1 = findMinSeparation(a, b);
-  double sep2 = findMinSeparation(b, a);
-
-  if (!isConvexPolygon(a) || !isConvexPolygon(b)) {
-    print('🔴 Error all Polygons must be convex');
-  }
-
-  // print('\n🔽 FINAL CHECK:');
-  // print('   🔴 Separation A→B: $sep1');
-  // print('   🔵 Separation B→A: $sep2');
-
-  bool colliding = sep1 > epsilon && sep2 > epsilon;
-  // print("sep1: $sep1, sep2: $sep2");
-  // print(colliding
-  //     ? '✅ COLLISION DETECTED!'
-  //     : '❌ NO COLLISION - Objects are touching or separated');
-
-  return colliding;
-}
-
-bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
-  Vector2 otherGridPosition = other.position / other.pixelToUnitRatio;
-  Vector2 draggedGridPosition =
-      draggedPolygon.position / draggedPolygon.pixelToUnitRatio;
-  print("draggedPolygon: ${draggedGridPosition}");
-  print("other: ${otherGridPosition}");
-  List<Vector2> thisPolygon = draggedPolygon.adjustedVertices
-      .map((v) => v + draggedGridPosition)
-      .toList();
-  List<Vector2> thisInnerPolygon = draggedPolygon.adjustedInnerVertices
-      .map((v) => v + draggedGridPosition)
-      .toList();
-  List<Vector2> otherPolygon =
-      other.adjustedVertices.map((v) => v + otherGridPosition).toList();
-  List<Vector2> otherInnerPolygon =
-      other.adjustedInnerVertices.map((v) => v + otherGridPosition).toList();
-  List<List<Vector2>> draggedConvexPolygons = [];
-  if (thisInnerPolygon.isNotEmpty) {
-    print("thisInnerPolygon: $thisInnerPolygon");
-    final triangles = triangulatePolygonWithHoles(
-        outerPolygon: thisPolygon, holes: [thisInnerPolygon]);
-    // print("triangles: $triangles");
-    for (int i = 0; i < triangles.length; i++) {
-      final relativeTriangle =
-          triangles[i].map((v) => v - draggedPolygon.topLeft).toList();
-      draggedConvexPolygons.add(relativeTriangle);
-    }
-  } else if (isConvexPolygon(thisPolygon)) {
-    draggedConvexPolygons = [thisPolygon];
+bool checkOverlap(
+    InterfaceSnappableShape other, InterfaceSnappableShape dragged) {
+  if (other is SnappableCircle && dragged is SnappablePolygon) {
+    print("Circle-Polygon Collision ");
+    return _circlePolygonOverlap(circle: other, polygon: dragged);
+  } else if (other is SnappablePolygon && dragged is SnappableCircle) {
+    print("Polygon-Circle Collision");
+    return _circlePolygonOverlap(circle: dragged, polygon: other);
+  } else if (other is SnappablePolygon && dragged is SnappablePolygon) {
+    print("**********Polygon-Polygon Collision");
+    return _polygonPolygonOverlap(p1: other, p2: dragged);
+  } else if (other is SnappableCircle && dragged is SnappableCircle) {
+    print("Circle-Circle Collision");
+    return _circleCircleOverlap(c1: other, c2: dragged);
   } else {
-    List<int> indices = Earcut.triangulateFromPoints(
-        thisPolygon.map((v) => Point(v.x, v.y)).toList());
-
-    // ✅ Convert index triplets into a list of triangles
-    for (int i = 0; i < indices.length; i += 3) {
-      draggedConvexPolygons.add([
-        thisPolygon[indices[i]],
-        thisPolygon[indices[i + 1]],
-        thisPolygon[indices[i + 2]],
-      ]);
-    }
+    // Default case (shouldn't happen)
+    throw ArgumentError("Unsupported shape types: $other, $dragged");
   }
+}
 
-  List<List<Vector2>> otherConvexPolygons = [];
+/// ✅ Circle-Circle Collision
+bool _circleCircleOverlap(
+    {required SnappableCircle c1, required SnappableCircle c2}) {
+  double distance = c1.position.distanceTo(c2.position);
+  return distance < (c1.radius + c2.radius);
+}
 
-  if (otherInnerPolygon.isNotEmpty) {
-    print("thisInnerPolygon: $otherInnerPolygon");
-    final triangles = triangulatePolygonWithHoles(
-        outerPolygon: otherPolygon, holes: [otherInnerPolygon]);
-    print("triangles: $triangles");
-    for (int i = 0; i < triangles.length; i++) {
-      final relativeTriangle =
-          triangles[i].map((v) => v - other.topLeft).toList();
-      otherConvexPolygons.add(relativeTriangle);
-    }
-  } else if (isConvexPolygon(otherPolygon)) {
-    otherConvexPolygons = [otherPolygon];
-  } else {
-    List<int> indices = Earcut.triangulateFromPoints(
-        otherPolygon.map((v) => Point(v.x, v.y)).toList());
+/// ✅ Polygon-Polygon Collision (Existing Logic)
+bool _polygonPolygonOverlap(
+    {required SnappablePolygon p1, required SnappablePolygon p2}) {
+  print("p1: ${p1.adjustedVertices}, p2: ${p2.adjustedVertices}");
 
-    // ✅ Convert index triplets into a list of triangles
-    for (int i = 0; i < indices.length; i += 3) {
-      otherConvexPolygons.add([
-        otherPolygon[indices[i]],
-        otherPolygon[indices[i + 1]],
-        otherPolygon[indices[i + 2]],
-      ]);
-    }
-  }
+  Vector2 p1GridPosition = p1.position / p1.pixelToUnitRatio;
+  Vector2 p2GridPosition = p2.position / p2.pixelToUnitRatio;
 
-  for (var draggedConvex in draggedConvexPolygons) {
-    for (var otherConvex in otherConvexPolygons) {
-      if (isCollidingPolygonPolygon(draggedConvex, otherConvex)) {
+  print("p1GridPosition: $p1GridPosition, p2GridPosition: $p2GridPosition");
+
+  List<Vector2> p1Polygon =
+      p1.adjustedVertices.map((v) => v + p1GridPosition).toList();
+  List<Vector2> p2Polygon =
+      p2.adjustedVertices.map((v) => v + p2GridPosition).toList();
+  List<Vector2> p1PolygonInner =
+      p1.adjustedInnerVertices.map((v) => v + p1GridPosition).toList();
+  List<Vector2> p2PolygonInner =
+      p2.adjustedInnerVertices.map((v) => v + p2GridPosition).toList();
+
+  print("p1Polygon: $p1Polygon, p2Polygon: $p2Polygon");
+  print("p1PolygonInner: $p1PolygonInner, p2PolygonInner: $p2PolygonInner");
+
+  // List<List<Vector2>> p1ConvexPolygons = _triangulatePolygon(p1Polygon);
+  // List<List<Vector2>> p2ConvexPolygons = _triangulatePolygon(p2Polygon);
+
+  List<List<Vector2>> p1ConvexPolygons = p1PolygonInner.isNotEmpty
+      ? triangulatePolygonWithHoles(
+          outerPolygon: p1Polygon,
+          holes: [p1PolygonInner],
+        )
+      : _triangulatePolygon(p1Polygon);
+
+  List<List<Vector2>> p2ConvexPolygons = p2PolygonInner.isNotEmpty
+      ? triangulatePolygonWithHoles(
+          outerPolygon: p2Polygon,
+          holes: [p2PolygonInner],
+        )
+      : _triangulatePolygon(p2Polygon);
+
+  print("p1ConvexPolygons: $p1ConvexPolygons");
+  print("p2ConvexPolygons: $p2ConvexPolygons");
+
+  for (var poly1 in p1ConvexPolygons) {
+    for (var poly2 in p2ConvexPolygons) {
+      if (isCollidingPolygonPolygon(poly1, poly2)) {
         return true;
       }
     }
@@ -215,136 +86,128 @@ bool checkOverlap(SnappablePolygon other, SnappablePolygon draggedPolygon) {
   return false;
 }
 
-bool isCounterClockwise(List<Vector2> polygon) {
-  double sum = 0.0;
-  for (int i = 0; i < polygon.length; i++) {
-    Vector2 p1 = polygon[i];
-    Vector2 p2 = polygon[(i + 1) % polygon.length];
-    sum += (p2.x - p1.x) * (p2.y + p1.y);
-  }
-  return sum > 0;
-}
-
-List<List<Vector2>> triangulatePolygonWithHoles({
-  required List<Vector2> outerPolygon,
-  required List<List<Vector2>> holes,
+/// ✅ Circle-Polygon Collision
+bool _circlePolygonOverlap({
+  required SnappableCircle circle,
+  required SnappablePolygon polygon,
 }) {
-  // print("🔹 Original Outer Polygon: $outerPolygon");
-  // print("🔹 Original Holes: $holes");
+  double pixelToUnitRatio = polygon.pixelToUnitRatio;
+  double circleRadius = circle.radius / pixelToUnitRatio;
+  Vector2 circleCenter =
+      circle.position / pixelToUnitRatio + Vector2.all(circleRadius);
+  Vector2 polygonPosition = polygon.position / pixelToUnitRatio;
 
-  // Ensure correct winding order
-  outerPolygon = ensureCounterClockwise(outerPolygon);
-  holes = holes.map((hole) => ensureClockwise(hole)).toList();
+  print("Circle Center: $circleCenter, Circle Radius: $circleRadius");
+  print("Polygon Vertices: ${polygon.adjustedVertices}");
 
-  // print("🔄 Corrected Outer Polygon: $outerPolygon");
-  // print("🔄 Corrected Holes: $holes");
+  // Check if any polygon edge is too close to the circle
+  for (int i = 0; i < polygon.adjustedVertices.length; i++) {
+    Vector2 v1 = polygon.adjustedVertices[i] + polygonPosition;
+    Vector2 v2 =
+        polygon.adjustedVertices[(i + 1) % polygon.adjustedVertices.length] +
+            polygonPosition;
 
-  List<double> flattenedVertices = [];
-  List<int> holeIndices = [];
-
-  // Add outer polygon vertices
-  flattenedVertices.addAll(outerPolygon.expand((v) => [v.x, v.y]));
-
-  // Add hole vertices
-  int currentIndex = outerPolygon.length;
-  for (var hole in holes) {
-    holeIndices.add(currentIndex);
-    flattenedVertices.addAll(hole.expand((v) => [v.x, v.y]));
-    currentIndex += hole.length;
+    double distance = _distanceToSegment(circleCenter, v1, v2);
+    print(
+        "Distance to Segment $v1 $v2,  $i: $distance circle radius: $circleRadius");
+    if (distance < circleRadius) return true;
   }
 
-  // print("📍 Flattened Vertices: $flattenedVertices");
-  // print("🕳️ Hole Indices: $holeIndices");
+  // Check if the circle's center is inside the polygon
+  if (isPointInPolygon(
+    point: circleCenter,
+    polygon: polygon.adjustedVertices,
+    polygonPosition: polygonPosition,
+  )) {
+    print("Circle Center Inside Polygon");
+    return true;
+  }
+  print("Circle Center Outside Polygon");
+  return false;
+}
 
-  // Triangulate
-  List<int> indices =
-      Earcut.triangulateRaw(flattenedVertices, holeIndices: holeIndices);
-
-  print("🔺 Raw Indices: $indices");
-
-  if (indices.isEmpty) {
-    print("❌ Triangulation failed - No indices generated");
-    return [];
+/// ✅ Triangulate Polygon for Collision
+List<List<Vector2>> _triangulatePolygon(List<Vector2> polygon) {
+  if (isConvexPolygon(polygon)) {
+    return [polygon];
   }
 
-  // Combine vertices
-  List<Vector2> combinedVertices = [...outerPolygon, ...holes.expand((h) => h)];
-  List<List<Vector2>> triangles = [];
+  List<List<Vector2>> convexPolygons = [];
+  List<int> indices = Earcut.triangulateFromPoints(
+      polygon.map((v) => Point(v.x, v.y)).toList());
 
-  // Generate triangles
   for (int i = 0; i < indices.length; i += 3) {
-    List<Vector2> triangle = [
-      combinedVertices[indices[i]],
-      combinedVertices[indices[i + 1]],
-      combinedVertices[indices[i + 2]]
-    ];
-
-    // Enhanced hole checking
-    Vector2 centroid = Vector2(
-        (triangle[0].x + triangle[1].x + triangle[2].x) / 3,
-        (triangle[0].y + triangle[1].y + triangle[2].y) / 3);
-
-    print("🔺 Checking Triangle: $triangle");
-    print("📍 Triangle Centroid: $centroid");
-
-    bool isInHole = holes.any((hole) => pointInPolygon(centroid, hole));
-    print("🕳️ Is Triangle in Hole: $isInHole");
-
-    if (!isInHole) {
-      triangles.add(triangle);
-      print("✅ Valid Triangle Added: $triangle");
-    }
+    convexPolygons.add([
+      polygon[indices[i]],
+      polygon[indices[i + 1]],
+      polygon[indices[i + 2]],
+    ]);
   }
-
-  print("🏁 Total Triangles: ${triangles.length}");
-  return triangles;
+  return convexPolygons;
 }
 
-/// **Ensure the outer polygon is counter-clockwise**
-List<Vector2> ensureCounterClockwise(List<Vector2> polygon) {
-  double area = 0;
-  for (int i = 0; i < polygon.length; i++) {
-    Vector2 p1 = polygon[i];
-    Vector2 p2 = polygon[(i + 1) % polygon.length];
-    area += (p2.x - p1.x) * (p2.y + p1.y);
-  }
-  return area > 0 ? polygon.reversed.toList() : polygon;
+/// ✅ Distance from a point to a line segment (for circle-polygon check)
+double _distanceToSegment(Vector2 point, Vector2 v1, Vector2 v2) {
+  double lengthSquared = v1.distanceToSquared(v2);
+  if (lengthSquared == 0.0) return point.distanceTo(v1);
+  double t = ((point - v1).dot(v2 - v1)) / lengthSquared;
+  t = t.clamp(0.0, 1.0);
+  Vector2 projection = v1 + (v2 - v1) * t;
+  return point.distanceTo(projection);
 }
 
-/// **Ensure holes are clockwise**
-List<Vector2> ensureClockwise(List<Vector2> polygon) {
-  double area = 0;
-  for (int i = 0; i < polygon.length; i++) {
-    Vector2 p1 = polygon[i];
-    Vector2 p2 = polygon[(i + 1) % polygon.length];
-    area += (p2.x - p1.x) * (p2.y + p1.y);
-  }
-  return area < 0 ? polygon.reversed.toList() : polygon;
-}
-
-/// **Check if a triangle is inside any of the holes**
-bool isTriangleInsideAnyHole(
-    List<Vector2> triangle, List<List<Vector2>> holes) {
-  // Calculate triangle centroid
-  Vector2 centroid = Vector2(
-      (triangle[0].x + triangle[1].x + triangle[2].x) / 3,
-      (triangle[0].y + triangle[1].y + triangle[2].y) / 3);
-
-  // Check if centroid is inside any hole
-  return holes.any((hole) => pointInPolygon(centroid, hole));
-}
-
-/// **Ray-Casting Algorithm: Check if a point is inside a polygon**
-bool pointInPolygon(Vector2 point, List<Vector2> polygon) {
+/// ✅ Checks if a point is inside a polygon using the Ray-Casting Algorithm.
+bool isPointInPolygon(
+    {required Vector2 point,
+    required List<Vector2> polygon,
+    required Vector2 polygonPosition}) {
+  print("point: $point, polygon: $polygon");
   int intersections = 0;
-  for (int i = 0; i < polygon.length; i++) {
-    Vector2 a = polygon[i];
-    Vector2 b = polygon[(i + 1) % polygon.length];
 
-    if ((a.y > point.y) != (b.y > point.y) &&
-        point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x) {
+  for (int i = 0; i < polygon.length; i++) {
+    Vector2 v1 = polygon[i] + polygonPosition;
+    Vector2 v2 = polygon[(i + 1) % polygon.length] + polygonPosition;
+
+    // Check if the point is exactly on a vertex
+    if (point == v1 || point == v2) {
+      return true;
+    }
+
+    // Check if the point is exactly on an edge
+    if (_isPointOnSegment(point, v1, v2)) {
+      return true;
+    }
+
+    // Ray-casting algorithm: count intersections with polygon edges
+    if ((v1.y > point.y) != (v2.y > point.y) &&
+        (point.x < (v2.x - v1.x) * (point.y - v1.y) / (v2.y - v1.y) + v1.x)) {
       intersections++;
     }
   }
-  return (intersections % 2) != 0;
+
+  // If the number of intersections is odd, the point is inside the polygon
+  return (intersections % 2) == 1;
+}
+
+/// ✅ Checks if a point lies exactly on a segment between two vertices.
+bool _isPointOnSegment(Vector2 point, Vector2 v1, Vector2 v2) {
+  double crossProduct =
+      (point.y - v1.y) * (v2.x - v1.x) - (point.x - v1.x) * (v2.y - v1.y);
+  if (crossProduct.abs() > 1e-10) {
+    return false;
+  }
+
+  double dotProduct =
+      (point.x - v1.x) * (v2.x - v1.x) + (point.y - v1.y) * (v2.y - v1.y);
+  if (dotProduct < 0) {
+    return false;
+  }
+
+  double squaredLength =
+      (v2.x - v1.x) * (v2.x - v1.x) + (v2.y - v1.y) * (v2.y - v1.y);
+  if (dotProduct > squaredLength) {
+    return false;
+  }
+
+  return true;
 }

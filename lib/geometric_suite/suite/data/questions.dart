@@ -1,5 +1,5 @@
 import 'package:first_math/geometric_suite/common/components/frame/grid_component.dart';
-import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
+import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
 import 'package:first_math/geometric_suite/suite/data/shapes.dart';
 import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 typedef V = Vector2;
 
 class QuestionData {
-  final List<SnappablePolygon> objects;
+  final List<InterfaceSnappableShape> objects;
   final List<V> questionPositions;
   final List<V> answerPositions;
 
@@ -111,7 +111,7 @@ final question4 = QuestionData(
 final question5 = QuestionData(
   objects: [
     square.copyWith()
-      ..rotation = 90
+      // ..rotation = 90
       ..scaleHeight = 4
       ..scaleWidth = 3
       ..color = Colors.pinkAccent,
@@ -119,7 +119,7 @@ final question5 = QuestionData(
       ..rotation = 90
       ..color = Colors.red,
     square.copyWith()
-      ..rotation = 90
+      // ..rotation = 90
       ..scaleHeight = 4
       ..scaleWidth = 3
       ..color = Colors.black,
@@ -163,7 +163,6 @@ final question5 = QuestionData(
 final question6 = QuestionData(
   objects: [
     square.copyWith()
-      ..rotation = 90
       ..scaleHeight = 4
       ..scaleWidth = 2
       ..color = Colors.pinkAccent,
@@ -549,6 +548,80 @@ final question11 = QuestionData(
   questionPositions: [V(1, 4), V(4, 0)],
   answerPositions: [V(4, 1), V(6, 0)],
 );
+final question12 = QuestionData(
+  objects: [
+    circle.copyWith()
+      ..radius = 1
+      ..color = Colors.red,
+    circle.copyWith()
+      ..radius = 1
+      ..color = Colors.green,
+    square.copyWith()
+      ..rotation = 22
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.green,
+    square.copyWith()
+      ..rotation = 22
+      ..scaleHeight = 3
+      ..scaleWidth = 1.5
+      ..color = Colors.blue,
+    lShape.copyWith()
+      ..scaleHeight = 1
+      ..scaleWidth = 1
+      ..rotation = 12
+      ..color = Colors.brown,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 4
+      ..rotation = 22
+      ..color = Colors.purple,
+    pentagon.copyWith()
+      ..scaleHeight = 0.5
+      ..scaleWidth = 0.5
+      ..rotation = -5
+      ..color = Colors.yellow,
+  ],
+  questionPositions: [
+    V(6, 0),
+    V(6, 2),
+    V(11, 3),
+    V(9, 3),
+    V(4, 6),
+    V(5, 4),
+    V(4, 5)
+  ],
+  answerPositions: [
+    V(6, 0),
+    V(6, 2),
+    V(11, 3),
+    V(9, 3),
+    V(4, 6),
+    V(5, 4),
+    V(4, 5)
+  ],
+);
+final question13 = QuestionData(
+  objects: [
+    polygonWithHole.copyWith()
+      ..scaleHeight = 0.2
+      ..scaleWidth = 0.2
+      ..color = Colors.orange,
+    triangle.copyWith()
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..color = Colors.yellow
+      ..rotation = 0,
+  ],
+  questionPositions: [
+    V(0, 0),
+    V(8, 5),
+  ],
+  answerPositions: [
+    V(7, 4),
+    V(8, 0),
+  ],
+);
 
 List<QuestionData> questionData = [
   question1,
@@ -562,9 +635,11 @@ List<QuestionData> questionData = [
   question9,
   question10,
   question11,
+  question12,
+  question13
 ];
 
-List<SnappablePolygon> getSnappablePolygonsFromQuestion({
+List<InterfaceSnappableShape> getSnappablePolygonsFromQuestion({
   required QuestionData questionData,
   required List<Vector2> positions,
   required int questionIndex,
@@ -577,6 +652,7 @@ List<SnappablePolygon> getSnappablePolygonsFromQuestion({
       polygonIndex: questionData.objects.indexOf(sp),
       upperLeftPosition: positions[questionData.objects.indexOf(sp)],
       isDraggable: isDraggable,
+      grid: grid,
     )..grid = grid;
   }).toList();
 }

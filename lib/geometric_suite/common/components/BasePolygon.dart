@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:first_math/geometric_suite/common/utils/helpers.dart';
-import 'package:first_math/geometric_suite/suite/utils/check_collision_polygon.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -22,11 +21,11 @@ abstract class BasePolygon extends PositionComponent
   late List<Vector2> adjustedVertices;
   late List<Vector2> adjustedInnerVertices;
   late Vector2 topLeft;
-  Paint fillPaint = Paint();
-  final Paint holePaint = Paint()..blendMode = BlendMode.clear;
-  late Paint highlightPaint = Paint();
+  late Paint fillPaint;
+  late Paint holePaint;
+  late Paint highlightPaint;
 
-  late Paint outerPaint;
+  // late Paint outerPaint;
   Path holePath = Path();
   Path polygonPath = Path();
   Vector2? upperLeftPosition;
@@ -79,6 +78,8 @@ abstract class BasePolygon extends PositionComponent
 
         add(PolygonHitbox(relativeTriangle, isSolid: false)
           ..debugColor = Colors.green // ✅ Make hitboxes visible
+          ..debugMode = false
+          ..priority = 100
           ..anchor = Anchor.topLeft);
       }
     } else {
@@ -87,7 +88,9 @@ abstract class BasePolygon extends PositionComponent
           .toList();
 
       add(PolygonHitbox(pixelVertices, isSolid: true)
-        ..debugColor = Colors.blue // ✅ Make hitboxes visible
+        ..debugColor = Colors.blue
+        ..priority = 100
+        ..debugMode = true // ✅ Make hitboxes visible
         ..anchor = Anchor.topLeft);
     }
 
@@ -95,40 +98,67 @@ abstract class BasePolygon extends PositionComponent
   }
 
   void initializeAdjustedVertices() {
-    List<Vector2> rotatedVertices = rotateVertices(vertices, rotation);
+    List<Vector2> shiftAndScaledVertices = shiftAndScaleVertices(
+      vertices: vertices,
+      scaleWidth: scaleWidth,
+      scaleHeight: scaleHeight,
+    );
+    List<Vector2> rotatedShiftedScaledVertices =
+        rotateVertices(shiftAndScaledVertices, rotation);
+
+    topLeft = getTopLeft(vertices);
+
     List<Vector2> rotatedInnerVertices =
         rotateVertices(innerVertices, rotation);
 
+    List<Vector2> shiftAndScaledInnerVertices = shiftAndScaleVertices(
+      vertices: innerVertices,
+      overRideTopLeft: topLeft,
+      scaleWidth: scaleWidth,
+      scaleHeight: scaleHeight,
+    );
+    List<Vector2> rotatedShiftedScaledInnerVertices =
+        rotateVertices(shiftAndScaledInnerVertices, rotation);
+
     // 🔹 Flip Horizontally if needed
     if (flipHorizontal) {
-      rotatedVertices = flipVerticesHorizontally(rotatedVertices);
+      rotatedShiftedScaledVertices =
+          flipVerticesHorizontally(rotatedShiftedScaledVertices);
       if (rotatedInnerVertices.isNotEmpty) {
-        rotatedInnerVertices = flipVerticesHorizontally(rotatedInnerVertices);
+        rotatedInnerVertices =
+            flipVerticesHorizontally(rotatedShiftedScaledInnerVertices);
       }
     }
 
     // 🔹 Flip Vertically if needed
     if (flipVertical) {
-      rotatedVertices = flipVerticesVertically(rotatedVertices);
+      rotatedShiftedScaledVertices =
+          flipVerticesVertically(rotatedShiftedScaledVertices);
       if (rotatedInnerVertices.isNotEmpty) {
-        rotatedInnerVertices = flipVerticesVertically(rotatedInnerVertices);
+        rotatedInnerVertices =
+            flipVerticesVertically(rotatedShiftedScaledInnerVertices);
       }
     }
 
-    topLeft = getTopLeft(rotatedVertices);
+    topLeft = getTopLeft(rotatedShiftedScaledVertices);
 
+    // adjustedVertices = shiftAndScaleVertices(
+    //   vertices: rotatedVertices,
+    //   topLeft: topLeft,
+    //   scaleWidth: scaleWidth,
+    //   scaleHeight: scaleHeight,
+    // );
     adjustedVertices = shiftAndScaleVertices(
-      vertices: rotatedVertices,
-      topLeft: topLeft,
-      scaleWidth: scaleWidth,
-      scaleHeight: scaleHeight,
+      vertices: rotatedShiftedScaledVertices,
+      overRideTopLeft: topLeft,
+      scaleWidth: 1.0,
+      scaleHeight: 1.0,
     );
-
     adjustedInnerVertices = shiftAndScaleVertices(
-      vertices: rotatedInnerVertices,
-      topLeft: topLeft,
-      scaleWidth: scaleWidth,
-      scaleHeight: scaleHeight,
+      vertices: rotatedShiftedScaledInnerVertices,
+      overRideTopLeft: topLeft,
+      scaleWidth: 1,
+      scaleHeight: 1,
     );
 
     // ✅ SET SIZE CORRECTLY (IN GRID UNITS)
@@ -143,10 +173,12 @@ abstract class BasePolygon extends PositionComponent
 
   List<Vector2> shiftAndScaleVertices({
     required List<Vector2> vertices,
-    required Vector2 topLeft,
+    Vector2? overRideTopLeft,
     required double scaleWidth,
     required double scaleHeight,
   }) {
+    if (vertices.isEmpty) return [];
+    Vector2 topLeft = overRideTopLeft ?? getTopLeft(vertices);
     return vertices.map((v) {
       Vector2 shifted = (v - topLeft);
       return Vector2(shifted.x * scaleWidth, shifted.y * scaleHeight);
@@ -176,17 +208,14 @@ abstract class BasePolygon extends PositionComponent
     }).toList();
   }
 
-  void updateOuterPath() {
-    polygonPath.reset();
-    polygonPath.moveTo(adjustedVertices.first.x * pixelToUnitRatio,
-        adjustedVertices.first.y * pixelToUnitRatio);
-
-    for (var vertex in adjustedVertices.skip(1)) {
-      polygonPath.lineTo(
-          vertex.x * pixelToUnitRatio, vertex.y * pixelToUnitRatio);
+  Path createPathFromVertices(List<Vector2> vertices, double pixelRatio) {
+    final path = Path();
+    path.moveTo(vertices.first.x * pixelRatio, vertices.first.y * pixelRatio);
+    for (var vertex in vertices.skip(1)) {
+      path.lineTo(vertex.x * pixelRatio, vertex.y * pixelRatio);
     }
-
-    polygonPath.close();
+    path.close();
+    return path;
   }
 
   @override
@@ -195,38 +224,25 @@ abstract class BasePolygon extends PositionComponent
     priority = 1;
     initializeAdjustedVertices();
     anchor = Anchor.topLeft;
-    highlightPaint
+    highlightPaint = Paint()
       ..color = Colors.white54
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderWidth;
     fillPaint = Paint()..color = color;
-    outerPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        stops: [0, 1],
-        colors: [Color.alphaBlend(color.withOpacity(0.8), Colors.white), color],
-      ).createShader(polygonPath.getBounds());
+    holePaint = Paint()..blendMode = BlendMode.clear;
     addHitboxes();
     return super.onLoad();
   }
 
   /// ✅ Properly draws the polygon using correct colors and grid scaling
   void _drawPolygon(Canvas canvas) {
-    updateOuterPath();
+    polygonPath = createPathFromVertices(adjustedVertices, pixelToUnitRatio);
     canvas.saveLayer(null, Paint());
     canvas.drawPath(polygonPath, fillPaint);
 
     if (adjustedInnerVertices.isNotEmpty) {
-      holePath.reset();
-      holePath.moveTo(adjustedInnerVertices.first.x * pixelToUnitRatio,
-          adjustedInnerVertices.first.y * pixelToUnitRatio);
-      for (var vertex in adjustedInnerVertices.skip(1)) {
-        holePath.lineTo(
-            vertex.x * pixelToUnitRatio, vertex.y * pixelToUnitRatio);
-      }
-      holePath.close();
-
+      holePath =
+          createPathFromVertices(adjustedInnerVertices, pixelToUnitRatio);
       // 🔥 Cut out the hole
       canvas.drawPath(holePath, holePaint);
     }
