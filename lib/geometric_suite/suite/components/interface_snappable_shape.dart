@@ -47,5 +47,6 @@ abstract class InterfaceSnappableShape extends PositionComponent {
     int? questionIndex,
     bool? isDraggable,
     GridComponent? grid,
+    double? holeRadius,
   });
 }

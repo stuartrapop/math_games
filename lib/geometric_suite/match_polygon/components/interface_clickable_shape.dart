@@ -26,5 +26,6 @@ abstract class InterfaceClickableShape extends PositionComponent {
     Function? updateActivePolygonIndex,
     Color? color,
     double? borderWidth,
+    bool? isSolid,
   });
 }

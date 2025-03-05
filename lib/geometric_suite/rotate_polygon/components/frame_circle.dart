@@ -29,7 +29,7 @@ class FrameCircle extends CircleComponent
 
   @override
   Future<void> onLoad() {
-    debugMode = true;
+    debugMode = false;
     size = Vector2(radius * 2, radius * 2);
     print("radius: $radius");
 

@@ -51,6 +51,8 @@ class ClickablePolygon extends BasePolygon
     double? borderWidth,
     int? polygonIndex,
     Function? updateActivePolygonIndex,
+    double? holeRadius,
+    bool? isSolid,
   }) {
     // ✅ Ensure updated ratio is applied before computations
 

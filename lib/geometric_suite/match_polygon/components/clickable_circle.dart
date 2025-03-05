@@ -46,6 +46,7 @@ class ClickableCircle extends CircleComponent
     double? radius,
     Color? borderColor,
     double? borderWidth,
+    bool? isSolid,
   }) {
     final double newPixelToUnitRatio =
         pixelToUnitRatio ?? this.pixelToUnitRatio;

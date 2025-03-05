@@ -8,7 +8,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
 abstract class BasePolygon extends PositionComponent
-    with DragCallbacks, TapCallbacks, GestureHitboxes, HasPaint {
+    with TapCallbacks, GestureHitboxes, HasPaint {
   late Color color;
   double borderWidth;
   double scaleWidth;
@@ -16,6 +16,7 @@ abstract class BasePolygon extends PositionComponent
   double rotation;
   bool flipHorizontal;
   bool flipVertical;
+  double holeRadius;
   List<Vector2> vertices;
   List<Vector2> innerVertices;
   late List<Vector2> adjustedVertices;
@@ -38,16 +39,18 @@ abstract class BasePolygon extends PositionComponent
     this.color = Colors.white,
     this.scaleWidth = 1.0,
     this.scaleHeight = 1.0,
+    this.holeRadius = 0.0,
     this.rotation = 0.0,
     this.flipHorizontal = false,
     this.flipVertical = false,
     this.upperLeftPosition,
-    this.borderWidth = 1.0,
+    this.borderWidth = 0,
   });
 
   BasePolygon copyWith({
     List<Vector2>? vertices,
     List<Vector2>? innerVertices,
+    double? holeRadius,
     Color? color,
     double? scaleWidth,
     double? scaleHeight,
@@ -90,7 +93,7 @@ abstract class BasePolygon extends PositionComponent
       add(PolygonHitbox(pixelVertices, isSolid: true)
         ..debugColor = Colors.blue
         ..priority = 100
-        ..debugMode = true // ✅ Make hitboxes visible
+        ..debugMode = false // ✅ Make hitboxes visible
         ..anchor = Anchor.topLeft);
     }
 
@@ -142,12 +145,6 @@ abstract class BasePolygon extends PositionComponent
 
     topLeft = getTopLeft(rotatedShiftedScaledVertices);
 
-    // adjustedVertices = shiftAndScaleVertices(
-    //   vertices: rotatedVertices,
-    //   topLeft: topLeft,
-    //   scaleWidth: scaleWidth,
-    //   scaleHeight: scaleHeight,
-    // );
     adjustedVertices = shiftAndScaleVertices(
       vertices: rotatedShiftedScaledVertices,
       overRideTopLeft: topLeft,
@@ -169,6 +166,12 @@ abstract class BasePolygon extends PositionComponent
 
     size = Vector2(maxX - minX, maxY - minY) *
         pixelToUnitRatio; // ✅ Grid units remain unchanged
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    print("tapDown of BasePolygon");
+    super.onTapDown(event);
   }
 
   List<Vector2> shiftAndScaleVertices({
@@ -245,6 +248,15 @@ abstract class BasePolygon extends PositionComponent
           createPathFromVertices(adjustedInnerVertices, pixelToUnitRatio);
       // 🔥 Cut out the hole
       canvas.drawPath(holePath, holePaint);
+    }
+
+    if (holeRadius > 0) {
+      // 🔥 Cut out the hole
+      canvas.drawCircle(
+        Offset(size.x / 2, size.y / 2),
+        holeRadius * pixelToUnitRatio,
+        holePaint,
+      );
     }
 
     // ✅ Restore the canvas layer to apply transparency

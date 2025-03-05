@@ -536,17 +536,23 @@ final question10 = QuestionData(
 
 final question11 = QuestionData(
   objects: [
+    polygonWithLShapeHole.copyWith()
+      ..color = Colors.yellow
+      ..rotation = 0,
     lShape.copyWith()
-      ..rotation = 90
-      ..color = Colors.red,
-    square.copyWith()
-      ..rotation = 90
-      ..scaleHeight = 4
-      ..scaleWidth = 3
-      ..color = Colors.black,
+      ..color = Colors.red
+      ..rotation = -90,
+    circle.copyWith()
+      ..color = Colors.green
+      ..radius = 2
+      ..priority = 25
+      ..rotation = 0,
+    polygonWithCircularHole.copyWith()
+      ..color = Colors.blue
+      ..rotation = 0,
   ],
-  questionPositions: [V(1, 4), V(4, 0)],
-  answerPositions: [V(4, 1), V(6, 0)],
+  questionPositions: [V(4, 0), V(7, 5), V(0, 4), V(8, 0)],
+  answerPositions: [V(2, 1), V(3, 2), V(9, 2), V(8, 1)],
 );
 final question12 = QuestionData(
   objects: [
@@ -603,24 +609,27 @@ final question12 = QuestionData(
 );
 final question13 = QuestionData(
   objects: [
-    polygonWithHole.copyWith()
-      ..scaleHeight = 0.2
-      ..scaleWidth = 0.2
-      ..color = Colors.orange,
-    triangle.copyWith()
-      ..scaleHeight = 2
-      ..scaleWidth = 2
+    polygonWithCircularHole.copyWith()
       ..color = Colors.yellow
       ..rotation = 0,
+    square.copyWith()
+      ..color = Colors.red
+      ..scaleHeight = 2
+      ..scaleWidth = 2
+      ..rotation = 0,
+    circle.copyWith()
+      ..color = Colors.green
+      ..radius = 2
+      ..priority = 25
+      ..rotation = 0,
+    circle.copyWith()
+      ..color = Colors.blue
+      ..radius = 1
+      ..priority = 25
+      ..rotation = 0,
   ],
-  questionPositions: [
-    V(0, 0),
-    V(8, 5),
-  ],
-  answerPositions: [
-    V(7, 4),
-    V(8, 0),
-  ],
+  questionPositions: [V(0, 2), V(8, 6), V(9, 1), V(11, 6)],
+  answerPositions: [V(8, 2), V(2, 6), V(1, 1), V(10, 4)],
 );
 
 List<QuestionData> questionData = [

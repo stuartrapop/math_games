@@ -60,6 +60,6 @@ final class SuiteInitial extends SuiteState {
       : super(
           questionStatus:
               List.filled(questionList.length, QuestionStatus.unanswered),
-          currentQuestionIndex: 0,
+          currentQuestionIndex: 10,
         );
 }

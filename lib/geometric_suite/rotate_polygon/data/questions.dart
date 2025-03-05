@@ -1,5 +1,5 @@
 import 'package:first_math/geometric_suite/match_polygon/components/interface_clickable_shape.dart';
-import 'package:first_math/geometric_suite/match_polygon/data/shapes.dart';
+import 'package:first_math/geometric_suite/rotate_polygon/data/shapes.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 

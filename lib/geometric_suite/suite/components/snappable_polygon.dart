@@ -13,7 +13,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
 class SnappablePolygon extends BasePolygon
-    with HasGameRef<SuiteGame>
+    with HasGameRef<SuiteGame>, DragCallbacks
     implements InterfaceSnappableShape {
   @override
   double radius = 1.0;
@@ -62,6 +62,7 @@ class SnappablePolygon extends BasePolygon
     double? pixelToUnitRatio,
     double? borderWidth,
     Function? updateActivePolygonIndex,
+    double? holeRadius,
   }) {
     // ✅ Ensure we have a valid grid reference
     double newPixelToUnitRatio =
@@ -147,6 +148,7 @@ class SnappablePolygon extends BasePolygon
 
     Completer<void> completer = Completer<void>();
     priority = 10;
+
     final effect = SequenceEffect(
       [
         ScaleEffect.by(

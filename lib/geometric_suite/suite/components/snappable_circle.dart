@@ -88,6 +88,7 @@ class SnappableCircle extends CircleComponent
     int? polygonIndex,
     bool? isDraggable,
     GridComponent? grid,
+    double? holeRadius,
   }) {
     final double newPixelToUnitRatio =
         pixelToUnitRatio ?? this.pixelToUnitRatio;

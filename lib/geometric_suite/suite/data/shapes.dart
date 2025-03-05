@@ -2,6 +2,7 @@ import 'package:first_math/geometric_suite/common/components/frame/grid_componen
 import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_circle.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
+import 'package:first_math/geometric_suite/suite/components/snappable_polygon_with_circular_hole.dart';
 import 'package:first_math/geometric_suite/suite/data/questions.dart';
 
 GridComponent tempGrid = GridComponent(
@@ -103,5 +104,17 @@ InterfaceSnappableShape circle = SnappableCircle(
 InterfaceSnappableShape polygonWithHole = SnappablePolygon(
   vertices: [V(0, 0), V(20, 0), V(20, 20), V(0, 20)],
   innerVertices: [V(5, 5), V(15, 5), V(15, 15), V(5, 15)],
+  grid: tempGrid,
+);
+InterfaceSnappableShape polygonWithLShapeHole = SnappablePolygon(
+  vertices: [V(0, 0), V(4, 0), V(4, 5), V(0, 5)],
+  innerVertices: [V(1, 1), V(2, 1), V(2, 3), V(3, 3), V(3, 4), V(1, 4)],
+  grid: tempGrid,
+);
+
+InterfaceSnappableShape polygonWithCircularHole =
+    SnappablePolygonWithCircularHole(
+  vertices: [V(0, 0), V(6, 0), V(6, 6), V(0, 6)],
+  holeRadius: 2,
   grid: tempGrid,
 );

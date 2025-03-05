@@ -1,15 +1,17 @@
 import 'dart:math';
 
-import 'package:first_math/cerise_game/cerise_container.dart';
 import 'package:first_math/five_across/five_accross_game.dart';
 import 'package:first_math/geometric_suite/match_polygon/match_container.dart';
 import 'package:first_math/geometric_suite/rotate_polygon/rotate_container.dart';
+import 'package:first_math/geometric_suite/shape_tracer/shape_tracer_container.dart';
 import 'package:first_math/geometric_suite/suite/suite_container.dart';
+import 'package:first_math/geometric_suite/tiled_menu/tile_menu_container.dart';
 import 'package:first_math/geometry_game/geometry_game_container.dart';
 import 'package:first_math/match_game/match_game_container.dart';
 import 'package:first_math/memory_games/memory_game_container.dart';
 import 'package:first_math/multi-cuisenaire/cuisenaire_game.dart';
 import 'package:first_math/number_line_game/number_line_container.dart';
+import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +22,8 @@ import 'package:star_menu/star_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Flame.device.fullScreen();
+  Flame.device.setLandscape();
   // Allow messages to queue instead of being discarded
   // Add this line:
   ServicesBinding.instance.defaultBinaryMessenger
@@ -27,11 +31,11 @@ void main() async {
   // Wait for platform channels to be ready
   await Future.delayed(const Duration(milliseconds: 200));
   SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
-  runApp(const MyApp());
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -70,17 +74,35 @@ class MyApp extends StatelessWidget {
 
   // Define your `go_router` routes
   static final GoRouter _router = GoRouter(
-    initialLocation: '/',
+    // initialLocation: '/tile-menu',
+    initialLocation: '/shape-tracer',
     routes: [
       GoRoute(
-          path: '/',
-          builder: (context, state) {
-            return const ResponsiveScaledBox(
-              width: 800,
-              autoCalculateMediaQueryData: false,
-              child: MenuPage(),
+        path: '/',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ResponsiveScaledBox(
+            width: 800,
+            autoCalculateMediaQueryData: false,
+            child: MenuPage(),
+          ),
+          transitionDuration:
+              const Duration(milliseconds: 600), // Slower transition
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
             );
-          }),
+          },
+        ),
+        // builder: (context, state) {
+        //   return const ResponsiveScaledBox(
+        //     width: 800,
+        //     autoCalculateMediaQueryData: false,
+        //     child: MenuPage(),
+        //   );
+        // }
+      ),
       GoRoute(
         path: '/geometry-game',
         builder: (context, state) {
@@ -131,9 +153,10 @@ class MyApp extends StatelessWidget {
         },
       ),
       GoRoute(
-        path: '/cerise-game',
+        path: '/tile-menu',
         builder: (context, state) {
-          return CeriseContainer(returnHome: () => returnHome(context));
+          return TileMenuContainer(
+              key: UniqueKey(), returnHome: () => returnHome(context));
         },
       ),
       GoRoute(
@@ -146,6 +169,12 @@ class MyApp extends StatelessWidget {
         path: '/rotate-game',
         builder: (context, state) {
           return RotateContainer(returnHome: () => returnHome(context));
+        },
+      ),
+      GoRoute(
+        path: '/shape-tracer',
+        builder: (context, state) {
+          return ShapeTracerContainer(returnHome: () => returnHome(context));
         },
       ),
     ],
@@ -192,20 +221,20 @@ class _MenuPageState extends State<MenuPage> {
           title: 'Shape Match',
           color: Colors.blue,
           icon: Icons.more_horiz_sharp),
-      MenuItem(
-          key: const Key('match-game'),
-          context: context,
-          route: '/match-game',
-          title: 'Match',
-          color: Colors.lightGreen,
-          icon: Icons.compare_arrows),
-      MenuItem(
-          key: const Key('five-accross'),
-          context: context,
-          route: '/five-accross-game',
-          title: 'Five Accross',
-          color: Colors.orange,
-          icon: Icons.compare_arrows),
+      // MenuItem(
+      //     key: const Key('match-game'),
+      //     context: context,
+      //     route: '/match-game',
+      //     title: 'Match',
+      //     color: Colors.lightGreen,
+      //     icon: Icons.compare_arrows),
+      // MenuItem(
+      //     key: const Key('five-accross'),
+      //     context: context,
+      //     route: '/five-accross-game',
+      //     title: 'Five Accross',
+      //     color: Colors.orange,
+      //     icon: Icons.compare_arrows),
       MenuItem(
           key: const Key('cuisenaire'),
           context: context,
@@ -213,25 +242,25 @@ class _MenuPageState extends State<MenuPage> {
           title: 'Cuisenaire',
           color: Colors.yellow,
           icon: Icons.compare_arrows),
+      // MenuItem(
+      //     key: const Key('memory-games'),
+      //     context: context,
+      //     route: '/memory-games',
+      //     title: 'Memory',
+      //     color: Colors.pink,
+      //     icon: Icons.compare_arrows),
+      // MenuItem(
+      //     key: const Key('number-line'),
+      //     context: context,
+      //     route: '/number-line-game',
+      //     title: 'Number Line',
+      //     color: const Color.fromARGB(255, 101, 30, 233),
+      //     icon: Icons.compare_arrows),
       MenuItem(
-          key: const Key('memory-games'),
+          key: const Key('tile-menu'),
           context: context,
-          route: '/memory-games',
-          title: 'Memory',
-          color: Colors.pink,
-          icon: Icons.compare_arrows),
-      MenuItem(
-          key: const Key('number-line'),
-          context: context,
-          route: '/number-line-game',
-          title: 'Number Line',
-          color: const Color.fromARGB(255, 101, 30, 233),
-          icon: Icons.compare_arrows),
-      MenuItem(
-          key: const Key('cerise-game'),
-          context: context,
-          route: '/cerise-game',
-          title: 'Cerise Game',
+          route: '/tile-menu',
+          title: 'Tile Menu',
           color: const Color.fromARGB(255, 101, 30, 233),
           icon: Icons.compare_arrows),
       MenuItem(
@@ -246,6 +275,13 @@ class _MenuPageState extends State<MenuPage> {
           context: context,
           route: '/rotate-game',
           title: 'Rotate Game',
+          color: const Color.fromARGB(255, 101, 30, 233),
+          icon: Icons.compare_arrows),
+      MenuItem(
+          key: const Key('shape-tracer'),
+          context: context,
+          route: '/shape-tracer',
+          title: 'Shape Tracer',
           color: const Color.fromARGB(255, 101, 30, 233),
           icon: Icons.compare_arrows),
     ];
@@ -316,7 +352,7 @@ class _MenuPageState extends State<MenuPage> {
                   ),
                   const SizedBox(height: 40),
                   const Text(
-                    'Menu',
+                    'Level 1',
                     style: TextStyle(
                       fontSize: 40,
                       color: Colors.black,

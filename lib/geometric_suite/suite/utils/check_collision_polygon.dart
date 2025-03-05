@@ -5,10 +5,12 @@ import 'package:first_math/geometric_suite/common/utils/helpers.dart';
 import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_circle.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
+import 'package:first_math/geometric_suite/suite/components/snappable_polygon_with_circular_hole.dart';
 import 'package:flame/components.dart';
 
 bool checkOverlap(
     InterfaceSnappableShape other, InterfaceSnappableShape dragged) {
+  print("Checking Overlap");
   if (other is SnappableCircle && dragged is SnappablePolygon) {
     print("Circle-Polygon Collision ");
     return _circlePolygonOverlap(circle: other, polygon: dragged);
@@ -21,10 +23,74 @@ bool checkOverlap(
   } else if (other is SnappableCircle && dragged is SnappableCircle) {
     print("Circle-Circle Collision");
     return _circleCircleOverlap(c1: other, c2: dragged);
+  } else if (other is SnappablePolygonWithCircularHole) {
+    print("Polygon with Hole other is polygon with hole");
+    return isDraggedInsideHole(shape1: dragged, shape2: other);
+  } else if (dragged is SnappablePolygonWithCircularHole) {
+    print("Polygon with Hole dragged is polygon with hole");
+    return isDraggedInsideHole(shape1: other, shape2: dragged);
   } else {
     // Default case (shouldn't happen)
     throw ArgumentError("Unsupported shape types: $other, $dragged");
   }
+}
+
+bool isDraggedInsideHole({
+  required InterfaceSnappableShape shape1,
+  required SnappablePolygonWithCircularHole shape2,
+}) {
+  final Vector2 holeCenter = (shape2.position + shape2.size / 2) /
+      shape1.grid.gridSize.toDouble(); // Center of the polygon
+  final double holeRadius = shape2.holeRadius;
+  print("Hole Center: $holeCenter, Hole Radius: $holeRadius");
+  // ✅ If shape1 shape is a SnappablePolygon (check all vertices)
+  if (shape1 is SnappablePolygon) {
+    print("shape1 vertices: ${shape1.adjustedVertices}");
+    Vector2 shape1Position = shape1.position / shape1.grid.gridSize.toDouble();
+    print("shape1 position: ${shape1Position}");
+    bool allVerticesInside = shape1.adjustedVertices.every(
+      (vertex) => (vertex + shape1Position).distanceTo(holeCenter) < holeRadius,
+    );
+
+    if (allVerticesInside) {
+      print("Polygon is completely inside the hole!");
+      return false;
+    }
+  }
+
+  // ✅ If shape1 shape is a SnappableCircle (check if fully inside)
+  else if (shape1 is SnappableCircle) {
+    double shape1Radius = shape1.radius / shape1.grid.gridSize.toDouble();
+    Vector2 shape1Position = shape1.position / shape1.grid.gridSize.toDouble();
+    print("shape1Radius: $shape1Radius");
+    print("shape1 position: ${shape1.position}");
+
+    Vector2 shape1Center = shape1Position + Vector2.all(shape1Radius);
+    print("shape1Center: $shape1Center hole center $holeCenter");
+    double circleDistance = shape1Center.distanceTo(holeCenter);
+
+    if (circleDistance + shape1Radius <= holeRadius) {
+      print("Circle is fully inside the hole!");
+      return false;
+    }
+  }
+
+  // ✅ Shape is NOT fully inside the hole (valid movement)
+  SnappablePolygon normalPolygon = SnappablePolygon(
+    vertices: shape2.vertices, // Only outer vertices
+    grid: shape2.grid,
+    questionIndex: shape2.questionIndex,
+    polygonIndex: shape2.polygonIndex,
+    flipHorizontal: shape2.flipHorizontal,
+    flipVertical: shape2.flipVertical,
+    upperLeftPosition: shape2.upperLeftPosition,
+    isDraggable: shape2.isDraggable,
+  ).copyWith(
+    pixelToUnitRatio: shape2.pixelToUnitRatio,
+  )..position = shape2.position;
+
+  // ✅ Now check for regular overlap using `checkOverlap`
+  return checkOverlap(normalPolygon, shape1);
 }
 
 /// ✅ Circle-Circle Collision

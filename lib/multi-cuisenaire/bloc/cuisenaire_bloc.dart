@@ -17,18 +17,20 @@ class CuisenaireBloc extends Bloc<CuisenaireEvent, CuisenaireState> {
 
   void _onRefactorFirstBoard(event, emit) {
     print("RefactorFirstBoard event fired");
+
     List<RegletteBlock> newRightBoard = [];
     for (int i = 0;
-        i < event.leftTableRectangleValue.size.x;
-        i += event.isHorizontal ? event.value as int : 1) {
+        i < (event.leftTableRectangleValue.size.x.toInt());
+        i += (event.isHorizontal as bool) ? event.value as int : 1) {
       for (int j = 0;
-          j < event.leftTableRectangleValue.size.y;
-          j += event.isHorizontal ? 1 : event.value as int) {
+          j < (event.leftTableRectangleValue.size.y.toInt());
+          j += (event.isHorizontal as bool) ? 1 : event.value.toInt() as int) {
         newRightBoard.add(RegletteBlock(
-            value: event.value,
-            startRow: event.leftTableRectangleValue.upperLeft.y + j,
-            startColumn: event.leftTableRectangleValue.upperLeft.x + i,
-            isHorizontal: event.isHorizontal));
+            value: (event.value.toInt()),
+            startRow: (event.leftTableRectangleValue.upperLeft.y.toInt()) + j,
+            startColumn:
+                (event.leftTableRectangleValue.upperLeft.x.toInt()) + i,
+            isHorizontal: (event.isHorizontal as bool)));
       }
     }
     emit(state.copyWith(

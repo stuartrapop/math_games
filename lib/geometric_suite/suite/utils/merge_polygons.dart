@@ -2,7 +2,9 @@ import 'dart:ui';
 
 import 'package:first_math/geometric_suite/common/components/frame/grid_component.dart';
 import 'package:first_math/geometric_suite/suite/components/interface_snappable_shape.dart';
+import 'package:first_math/geometric_suite/suite/components/snappable_circle.dart';
 import 'package:first_math/geometric_suite/suite/components/snappable_polygon.dart';
+import 'package:first_math/geometric_suite/suite/components/snappable_polygon_with_circular_hole.dart';
 import 'package:flame/components.dart';
 import 'package:polybool/polybool.dart';
 
@@ -49,7 +51,7 @@ double _calculatePolygonArea(List<Coordinate> vertices) {
 /// ✅ **Optimized: Process only affected grid cells!**
 List<List<CellColorClass>> processGridCells({
   required GridComponent grid,
-  required List<InterfaceSnappableShape> polygons,
+  required List<InterfaceSnappableShape> shapes,
   required List<Vector2> positions,
 }) {
   // ✅ Step 1: Initialize blank grid
@@ -58,55 +60,19 @@ List<List<CellColorClass>> processGridCells({
     (_) => List.generate(grid.cols, (_) => CellColorClass()),
   );
 
-  // ✅ Step 2: Process each polygon
-
-  for (int i = 0; i < polygons.length; i++) {
-    InterfaceSnappableShape polygon = polygons[i];
+  // ✅ Step 2: Process each shape
+  for (int i = 0; i < shapes.length; i++) {
+    InterfaceSnappableShape shape = shapes[i];
     Vector2 position = positions[i];
-    // print("🔍 Processing Polygon $i at $position");
-    double width = polygon.size.x / grid.gridSize;
-    double height = polygon.size.y / grid.gridSize;
-    // print("🔍 Polygon Width: ${width}");
-    // print("🔍 Polygon Height: ${height}");
-    // // 🔥 Get affected grid cell indices (Bounding Box Optimization)
-    int minCol = (position.x).floor();
-    int maxCol = ((position.x + width)).ceil();
-    int minRow = (position.y).floor();
-    int maxRow = ((position.y + height)).ceil();
 
-    // print(
-    // "🔍 $i at minCol : $minCol, minRow : $minRow, maxCol : $maxCol, maxRow : $maxRow");
-
-    // 🔥 Process only relevant grid cells
-    for (int col = minCol; col < maxCol; col++) {
-      for (int row = minRow; row < maxRow; row++) {
-        if (col < 0 || row < 0 || col >= grid.cols || row >= grid.rows) {
-          continue; // 🔹 Skip out-of-bounds cells
-        }
-
-        // 🔥 Convert grid cell to coordinates
-        List<Coordinate> cellVertices = [
-          Coordinate(col.toDouble(), row.toDouble()),
-          Coordinate(col.toDouble() + 1, row.toDouble()),
-          Coordinate(col.toDouble() + 1, row.toDouble() + 1),
-          Coordinate(col.toDouble(), row.toDouble() + 1),
-        ];
-
-        // 🔹 Get polygon in grid space
-        List<Coordinate> polygonVertices =
-            (polygon as SnappablePolygon).adjustedVertices.map((v) {
-          return Coordinate(v.x + position.x, v.y + position.y);
-        }).toList();
-
-        // 🔥 Find the intersectionr
-        Polygon intersection =
-            _polygonIntersectsCell(polygonVertices, cellVertices);
-        if (intersection.regions.isNotEmpty) {
-          double area = _calculatePolygonArea(intersection.regions.first);
-          gridColorMap[row][col].updateColor(polygon.color, area);
-          // print("🔍 Cell [$col, $row] updated with ${polygon.color} : $area");
-        }
-      }
+    // 🔹 Handle **SnappableCircle**
+    if (shape is SnappableCircle) {
+      _processCircle(shape, position, grid, gridColorMap);
+    }
+    // 🔹 Handle **SnappablePolygonWithCircularHole** (treated like a polygon)
+    else if (shape is SnappablePolygonWithCircularHole ||
+        shape is SnappablePolygon) {
+      _processPolygon(shape, position, grid, gridColorMap);
     }
   }
 
@@ -118,6 +84,111 @@ List<List<CellColorClass>> processGridCells({
   }
 
   return gridColorMap;
+}
+
+void _processCircle(
+  SnappableCircle circle,
+  Vector2 position,
+  GridComponent grid,
+  List<List<CellColorClass>> gridColorMap,
+) {
+  double radiusInGridUnits = circle.radius / grid.gridSize;
+  Vector2 circleCenter =
+      position + Vector2(radiusInGridUnits, radiusInGridUnits);
+
+  int minCol = (circleCenter.x - radiusInGridUnits).floor();
+  int maxCol = (circleCenter.x + radiusInGridUnits).ceil();
+  int minRow = (circleCenter.y - radiusInGridUnits).floor();
+  int maxRow = (circleCenter.y + radiusInGridUnits).ceil();
+
+  for (int col = minCol; col < maxCol; col++) {
+    for (int row = minRow; row < maxRow; row++) {
+      if (col < 0 || row < 0 || col >= grid.cols || row >= grid.rows) {
+        continue; // 🔹 Skip out-of-bounds cells
+      }
+
+      // 🔥 Convert grid cell to coordinates
+      List<Vector2> cellVertices = [
+        Vector2(col.toDouble(), row.toDouble()),
+        Vector2(col.toDouble() + 1, row.toDouble()),
+        Vector2(col.toDouble() + 1, row.toDouble() + 1),
+        Vector2(col.toDouble(), row.toDouble() + 1),
+      ];
+
+      // 🔹 Check if **circle overlaps the cell**
+      if (_circleIntersectsCell(
+          circleCenter, radiusInGridUnits, cellVertices)) {
+        double area = _calculateCircleCellOverlap(
+            circleCenter, radiusInGridUnits, cellVertices);
+        gridColorMap[row][col].updateColor(circle.color, area);
+      }
+    }
+  }
+}
+
+void _processPolygon(
+  InterfaceSnappableShape polygon,
+  Vector2 position,
+  GridComponent grid,
+  List<List<CellColorClass>> gridColorMap,
+) {
+  double width = polygon.size.x / grid.gridSize;
+  double height = polygon.size.y / grid.gridSize;
+
+  int minCol = (position.x).floor();
+  int maxCol = ((position.x + width)).ceil();
+  int minRow = (position.y).floor();
+  int maxRow = ((position.y + height)).ceil();
+
+  for (int col = minCol; col < maxCol; col++) {
+    for (int row = minRow; row < maxRow; row++) {
+      if (col < 0 || row < 0 || col >= grid.cols || row >= grid.rows) {
+        continue;
+      }
+
+      List<Coordinate> cellVertices = [
+        Coordinate(col.toDouble(), row.toDouble()),
+        Coordinate(col.toDouble() + 1, row.toDouble()),
+        Coordinate(col.toDouble() + 1, row.toDouble() + 1),
+        Coordinate(col.toDouble(), row.toDouble() + 1),
+      ];
+
+      // 🔹 Convert polygon vertices (Vector2 → Coordinate)
+      List<Coordinate> polygonVertices = (polygon is SnappablePolygon)
+          ? polygon.adjustedVertices.map((v) {
+              return Coordinate(v.x + position.x, v.y + position.y);
+            }).toList()
+          : (polygon as SnappablePolygonWithCircularHole)
+              .adjustedVertices
+              .map((v) {
+              return Coordinate(v.x + position.x, v.y + position.y);
+            }).toList();
+
+      Polygon intersection =
+          _polygonIntersectsCell(polygonVertices, cellVertices);
+      if (intersection.regions.isNotEmpty) {
+        double area = _calculatePolygonArea(intersection.regions.first);
+        gridColorMap[row][col].updateColor(polygon.color, area);
+      }
+    }
+  }
+}
+
+bool _circleIntersectsCell(
+    Vector2 circleCenter, double radius, List<Vector2> cellVertices) {
+  for (Vector2 vertex in cellVertices) {
+    if (vertex.distanceTo(circleCenter) <= radius) {
+      return true;
+    }
+  }
+  return false;
+}
+
+double _calculateCircleCellOverlap(
+    Vector2 circleCenter, double radius, List<Vector2> cellVertices) {
+  int insidePoints =
+      cellVertices.where((v) => v.distanceTo(circleCenter) <= radius).length;
+  return insidePoints / 4.0; // 🔥 Returns overlap ratio (0-1)
 }
 
 /// ✅ **Compare Two Processed Grids (Top & Bottom)**
@@ -133,9 +204,9 @@ bool compareGrids({
   print("🔵 Starting color processing...");
   // print("QuestionPosition for comparison: $questionPositions");
   List<List<CellColorClass>> questionGrid = processGridCells(
-      grid: grid, polygons: questions, positions: questionPositions);
+      grid: grid, shapes: questions, positions: questionPositions);
   List<List<CellColorClass>> answerGrid = processGridCells(
-      grid: grid, polygons: questions, positions: answerPositions);
+      grid: grid, shapes: questions, positions: answerPositions);
   stopwatch.stop();
   print("✅ Color processing completed in ${stopwatch.elapsedMilliseconds} ms");
 
